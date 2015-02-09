@@ -1,3 +1,39 @@
-body {
- margin: 1em;
+html, body {
+  height: 100%;
+}
+
+#wrapper {
+    min-height:100%;
+    position:relative;
+    padding-bottom:100px;
+}
+
+
+footer.footer.navbar-default ul > li > a {
+  color: #999;  
+}
+footer.footer.navbar-default ul > li > a:hover {
+  color: white;  
+}
+footer.footer.navbar-default {
+  position: absolute ;
+  bottom: 0px;
+  width: 100%;
+  background: #333;
+  border: none;
+  border-top: solid 5px #888;
+  border-radius:0px;
+  
+  
+  margin-bottom: 0px;
+  
+  clear:both;  
+} 
+
+.jsonview ol {
+ padding-left: 1em;
+}
+
+.panel-body .jsonview > ol {
+padding-left: none;
 }

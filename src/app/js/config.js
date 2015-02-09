@@ -10,6 +10,7 @@ require.config({
 		"bootstrap": "lib/js/bootswatch/bootstrap.min",
     "bootswatch": "lib/js/bootswatch/bootswatch",
 		"handlebars": "lib/js/handlebars/handlebars",
+    "handlebars-helpers": "lib/js/handlebars/handlebars-helpers",
 		"text": "lib/js/require/text",
     "moment": "lib/js/moment/moment",
 		"esjs": "lib/js/esjs/esjs",		
