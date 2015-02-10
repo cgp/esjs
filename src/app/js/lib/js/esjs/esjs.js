@@ -4,6 +4,11 @@ define([
 ], function ($, JSONPath) {
   
 	var ES = {};
+  /**
+  Provides the base Widget class...
+ 
+  @module widget
+  */
   ES.Client = function(cfg) {
     if (typeof cfg === "undefined") cfg = {};
     this.host = (typeof cfg.host === "undefined") ? "127.0.0.1" : cfg.host;
@@ -31,6 +36,12 @@ define([
     }
   }
   
+  /**
+    
+    Some sort of description.
+    @class ES.Client
+    
+   */
   $.extend(ES.Client.prototype, {
     "version": function(opts) {
       return this.ajax(this.baseurl, null, "version", opts);      
@@ -46,7 +57,30 @@ define([
     },
     "cluster": function(opts) {      
       return this.ajax(this.baseurl+"_cluster/state", null, "cluster", opts);
-    }
+    },
+    "indexCreate": function(opts) {
+      return this.ajax(this.baseurl+"_cluster/state", null, "cluster", opts);
+    },
+    "indexDelete": function(opts) {
+      return this.ajax(this.baseurl+"_cluster/state", null, "cluster", opts);
+    },
+    "indexGet": function(opts) {
+      return this.ajax(this.baseurl+"_cluster/state", null, "cluster", opts);
+    },
+    "indexPutMapping": function(opts) {
+      return this.ajax(this.baseurl+"_cluster/state", null, "cluster", opts);
+    },
+    /**
+      Creates a set of records.
+     
+      @method docBulk
+      @return {Object} Copy of ...
+     */
+    "docBulk": function(opts) {
+      return this.ajax(this.baseurl+"_cluster/state", null, "cluster", opts);
+    },
+    
+    
   });
   
 	window.ES = ES;	 

@@ -34,6 +34,11 @@ footer.footer.navbar-default {
  padding-left: 1em;
 }
 
-.panel-body .jsonview > ol {
+.panel-body.jsonview > ol {
 padding-left: none;
+}
+
+.panel-body.jsonview {
+  max-height: 300px;
+  overflow: scroll;
 }
