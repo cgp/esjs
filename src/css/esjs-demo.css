@@ -42,3 +42,10 @@ padding-left: none;
   max-height: 300px;
   overflow: scroll;
 }
+
+.panel-body.console {
+    font-family: monospace;
+    font-weight: bold;
+    background: #333;
+    color: #efefef;
+}

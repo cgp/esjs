@@ -14,7 +14,8 @@ require.config({
 		"text": "lib/js/require/text",
     "moment": "lib/js/moment/moment",
 		"esjs": "lib/js/esjs/esjs",		
-    "jsonpath": "lib/js/jsonpath/jsonpath"
+    "jsonpath": "lib/js/jsonpath/jsonpath",
+    "faker": "lib/js/faker/faker"
 	},
 	
 	"shim": {        
