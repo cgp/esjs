@@ -66,18 +66,32 @@ define([
    
    var logging = logFunc(".console", "status-template");
    
-   function handleExists(val) {
-
+   function handleExists(val) {    
      
      if (val) {
        es.indexDelete("names").then(logging, logging);
      }
      es.indexCreate("names")
         .then(logging, logging)
-        .then(function() {
-           es.docBulk([{name: "Carson, John"},{name: "McMahon, Ed"},{name: "Correct, Sir"}], {_index: "names", _type: "name"});
+        .then(function() {          
+          for(var y=0;y<1;y++) {
+            var os = [];
+            for(var x=0;x<10000;x++) {            
+              var o = {
+                first: faker.name.firstName(),
+                last: faker.name.lastName(),
+                state: faker.address.stateAbbr(),
+                phrase: faker.hacker.phrase(),
+                loc: {lo: faker.address.longitude(), la:faker.address.latitude()}
+              };
+              os.push(o);
+            }
+            es.docBulk(os, {_index: "names", _type: "name"});
+            os = null;
+            console.log(y);
+          }
         });
-     console.log(val);
+     
    }
    
    es.indexExists("names").then(handleExists);

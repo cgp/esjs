@@ -69,7 +69,7 @@ define([
      @method indexCreate      
      @param {String} indexName Name of the index
      @param {integer} shardCount number of shards, defaults to 1 if undefined, if null, defaults to whatever server is configured to
-     @param {integer} replicaCount number of replicas, defaults to 1 if undefined, if null, defaults to whatever server is configured to
+     @param {integer} replicaCount number of replicas, defaults to 0 if undefined, if null, defaults to whatever server is configured to. 
      @param {Object} opts extra options, formatted as specified in the elasticsearch documentation
      @return {String} response The response from the server.
     */
@@ -81,7 +81,7 @@ define([
         opts = {};
       }
       if (typeof shardCount == "undefined") {shardCount = 1};
-      if (typeof replicaCount == "undefined") {replicaCount = 1};
+      if (typeof replicaCount == "undefined") {replicaCount = 0};
       if (typeof opts.settings == "undefined") {
         opts.settings = {};
       }
