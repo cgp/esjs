@@ -15,9 +15,9 @@
 
 <script id="indices-template" type="text/x-handlebars-template">  
   <ul class="list-group">  
-    {{#each metadata.indices}}
+    {{#each indices}}
       <li class="list-group-item">        
-        {{@key}}
+        {{@key}} <span class="badge">{{this.docs.num_docs}}</span>
       </li>
     {{/each}}        
     </ul>
@@ -107,6 +107,19 @@
     <h3 class="panel-title">Console</a></h3>
   </div>
   <div class="panel-body console">
+    <form action="" onsubmit="">
+      <div class="col-md-8">
+      <textarea  style="height: 15em;margin:1em;width:95%;color:black;" id='query'></textarea>      
+      </div>
+      <div class="col-md-8">
+      <button class="btn btn-default" onclick="submit()">Submit</button>
+      </div>
+    </form>
+    
+    <div class="col-md-8">
+    <pre>
+    </pre>
+    </div>
     
   </div>
 </div>

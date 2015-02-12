@@ -47,8 +47,7 @@ define([
    
    es.stats().done(appendFunc("#main", "stats-template"));
    
-   es.cluster().done(function(response) {
-     appendFunc("#indices", "indices-template")(response);
+   es.cluster().done(function(response) {     
      appendFunc("#main", "cluster-template")(response);
    });
    
@@ -60,7 +59,11 @@ define([
    
    es.nodes().done(appendFunc("#main", "nodes-template"));
    
-   es.status().done(appendFunc("#main", "status-template"));   
+   es.status().done(function(response) {
+     console.log(response.indices);
+     appendFunc("#indices", "indices-template")(response);
+     appendFunc("#main", "status-template")(response);
+   });
    
    appendFunc("#main", "console-template")();
    
@@ -95,5 +98,7 @@ define([
    }
    
    es.indexExists("names").then(handleExists);
+   var query = es.createQuery();
+   console.log(query.getQuery());
    
 });

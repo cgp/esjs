@@ -2,6 +2,11 @@ define([
 	"jquery",	
   "jsonpath"
 ], function ($, JSONPath) {
+  var Util = {};
+  
+  Util.isNullOrUndefined = function(val) {
+    return (typeof val == "undefined") || (val == null);
+  }
   
 	var ES = {};
   /**
@@ -11,9 +16,9 @@ define([
   */
   ES.Client = function(cfg) {
     if (typeof cfg === "undefined") cfg = {};
-    this.host = (typeof cfg.host === "undefined") ? "127.0.0.1" : cfg.host;
-    this.port = (typeof cfg.port === "undefined") ? "9200" : cfg.port;    
-    this.context = (typeof cfg.context === "undefined") ? "/" : cfg.context;    
+    this.host = Util.isNullOrUndefined(cfg.host) ? "127.0.0.1" : cfg.host;
+    this.port = Util.isNullOrUndefined(cfg.port) ? "9200" : cfg.port;    
+    this.context = Util.isNullOrUndefined(cfg.context) ? "/" : cfg.context;    
     this.baseurl = "http://"+this.host+":"+this.port+this.context;
     this.cache = {};
     this.ajax = function(url, data, cacheName, opts) {
@@ -21,7 +26,7 @@ define([
         url: url,
         crossDomain: true        
       };
-      if ((typeof data !== "undefined") && (data != null)) {
+      if (!Util.isNullOrUndefined(data)) {
         if (typeof data == "object") {
           data = JSON.stringify(data);
         }
@@ -29,7 +34,7 @@ define([
       }
       $.extend(ajaxOpts, opts);
       var client = this;
-      if ((typeof cacheName !== "undefined") && (cacheName != null)) {
+      if (Util.isNullOrUndefined(cacheName)) {
         return $.ajax(ajaxOpts).done(function(response) {
           client.cache[cacheName] = response;
         });
@@ -38,6 +43,8 @@ define([
       }      
     }
   }
+  
+  
   
   /**
     
@@ -170,7 +177,70 @@ define([
       return this.ajax(this.baseurl+opts._index+"/_bulk", t, null, ajaxOpts);
     },
     
+    "createSearch": function(name, indicies, type) {
+      return new ES.Search(name, indicies, type, this, cfg);
+    },
   });
+
+  // http://okfnlabs.org/blog/2013/07/01/elasticsearch-query-tutorial.html#match-all--find-everything
+  // http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/search-request-body.html  
+  // http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/search.html
+  ES.Search = function(indicies, client) {
+    if (Util.isNullOrUndefined(indices)) {
+      name = "_all";
+    } else if (Array.isArray(indicies)) {
+      indicies = indicies.join(",");
+    }    
+    this.indicies = indicies;    
+    this.client = client;
+    this.post_filter = new ES.Filter(this);
+    this.sorts = [];
+    this.aggs = []; // we're going to implement facets this way of course    
+    this.query = new ES.Query(this)
+  }
+
+  $.extend(ES.Search.prototype, {
+    "from": function(from) {
+      this.from = from;
+    },
+    "size": function(size) {
+      this.size = size;
+    },
+    "addSortBy": function(field, order, mode, missing) {
+      var sortObj = {"field": field};      
+      this.sorts.push({"field": field, "order": order, "mode": mode, "missing": missing});
+    },
+    "removeSortBy": function(field, order, mode, missing) {
+    }    
+  });
+  
+  // http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-queries.html
+  ES.Query = function(parent) {    
+    this.parent;
+    this.queries = [];
+    this.filter = new Filter(this);
+  }  
+  
+  $.extend(ES.Query.prototype, {    
+    "matchAll": function() {
+    },
+    "getQuery": function() {      
+      var rootObj = {};      
+      return "hallo";
+    }
+  });
+  
+  // http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-filters.html
+  ES.Filter = function(parent) {
+    this.parent = parent;
+    this.filters = [];
+  }
+  
+  $.extend(ES.Filter.prototype, {
+    "term": function(term, values, opts) {
+      this.filters.push({});
+    }    
+  }
   
 	window.ES = ES;	 
 	return ES;
