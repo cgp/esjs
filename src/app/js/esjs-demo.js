@@ -17,7 +17,6 @@ define([
 
    var es = new ES.Client();
 
-
    function replaceFunc(target, template) {
      return function(data) {
       $(target).html(templates[template](data));
@@ -45,7 +44,8 @@ define([
      }
    }
 
-   es.stats().done(appendFunc("#main", "stats-template"));
+   es.nodesStats().done(appendFunc("#main", "stats-template"));
+      
 
    es.cluster().done(function(response) {
      appendFunc("#main", "cluster-template")(response);
@@ -70,7 +70,7 @@ define([
    var logging = logFunc(".console", "status-template");
 
    function createIndex() {    
-     return es.indexCreate("names");
+     return es.indices.create("names");
    }
    
    function createDataInIndex() {
@@ -96,7 +96,7 @@ define([
    
    function deleteIndexIfExists(val) {     
      if (val) {       
-       return es.indexDelete("names");           
+       return es.indices.remove("names");           
      } else {       
        return null; // I think this is ok.
      }
@@ -105,15 +105,49 @@ define([
    function performSearch() {
            var search = es.createSearch("names", "name");
            console.log("performing search...");
-           search.execute().done(function(response) {
+     return search.execute().done(function(response) {
              console.log(response);
-           });           
-  }
+     });           
+   }
    
-   es.indexExists("names")
+   function getDocCount() {
+     return es.indices.stats("names", "docs").done(function(response) {
+       console.log(response);
+     });
+   }
+   
+   function performSimpleSearch() {
+      var search = es.createSearch();
+         
+      search.setSize(25)
+               .setFields(['a','b','c'])
+               .setTimeout("5m")
+               .setTrackScores(false)         
+               .setPageSize(25, 3)
+               .nextPage()
+               .prevPage()
+               .addSort("sortedField", "asc")
+               .setAnalyzeWildcard(true);
+      console.log(search.getSearchURL(true));
+      return search.simpleQueryStringSearch("state:mi").done(function(response) {
+        console.log(response.hits);
+      });
+   }
+   
+   console.log(es.indices, es.baseURL);
+   es.indices.exists("names")
         .then(deleteIndexIfExists)
         .then(createIndex)
         .then(createDataInIndex)
-        .then(performSearch);
+        .then(performSearch)
+        .then(performSimpleSearch)
+        .then(getDocCount)
+        .then(performSimpleSearch)
+        .then(getDocCount);
+      
+   window.performSimpleSearch = performSimpleSearch;
+   window.getDocCount = getDocCount;
+        
+   
        
 });
