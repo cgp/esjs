@@ -10,30 +10,20 @@ Elasticsearch JavaScript client that doesn't suck. (Hopefully)
  
 ### Example Usage (in process) 
     var es = new ES.Client(); // assume same domain but port 9200 for now, CORS support needed
-        
-    es.getTypes().done(function(types){
-        .. do something with types 
-    }); // get a lits of the types across all indexes       
-    
-    var query = es.query();
-    query.addIndexes("*");
-    query.addSimpleQuery("elephants");      
-    query.addFacet("facetname", "term");
-    query.addFilter("term", vals);
-    query.setPageSize(30)
-    query.setPage(2); // zero based
-    query.exec().done(function(result) {
-      for(var i=0;i<result.hits.length;i++) {
-        console.log(result.hits._id);
-      }
-      console.log(result.hits.totalPages);
-      console.log(result.facets['facetname']['termvalue'])              
+      
+    var search = es.createSearch();
+         
+    search.setSize(25)
+          .setFields(['a','b','c'])
+          .setTimeout("5m")
+          .setTrackScores(false)         
+          .setPageSize(25, 3)
+          .nextPage()
+          .prevPage()
+          .addSort("sortedField", "asc")
+          .setAnalyzeWildcard(true);
+      
+    search.simpleQueryStringSearch("state:mi").done(function(response) {
+      console.log(response.hits);
     });
-
-    // elsewhere    
-    query.nextPage();
-    query.exec(resultHandler).done(function(results) {
-      // .. do soemthing with next page of results
-    });;
     
-
