@@ -109,16 +109,32 @@ define([
              console.log(response);
      });           
    }
+      
+   function checkDocCount(dfd, timeToWait) {
+     setTimeout(function() {
+       console.log('check');
+       es.indices.stats("names", "docs").done(function(response) {         
+         if (response.indices.names.primaries.docs.count == 30000) {                             
+           return dfd.resolve( "hurray" ); // yeah         
+         } else {           
+           checkDocCount(dfd, 500);
+         }
+       })
+     }, timeToWait);
+   }
    
-   function getDocCount() {
-     return es.indices.stats("names", "docs").done(function(response) {
-       console.log(response);
-     });
+   // So, this is particularly tricky, I think because 
+   // 1. I wanted the first loop to iterate immediately
+   // 2. Once the promise is made, just make sure you have a handle to it, you don't need to recreate it or pass it back, everything will fall together so long as you resolve the original promise
+   // 3. After that, taking this apart, in this style of repeating code, the main driver is the timeout, not the ajax call which is internal to the timeout, and this pattern probably will repeat other places
+   function waitForDocCount() {
+     var dfd = new jQuery.Deferred();               
+     checkDocCount(dfd, 0);             
+     return dfd.promise();
    }
    
    function performSimpleSearch() {
-      var search = es.createSearch();
-         
+      var search = es.createSearch();         
       search.setSize(25)
                .setFields(['a','b','c'])
                .setTimeout("5m")
@@ -127,9 +143,9 @@ define([
                .nextPage()
                .prevPage()
                .addSort("sortedField", "asc")
-               .setAnalyzeWildcard(true);
-      console.log(search.getSearchURL(true));
+               .setAnalyzeWildcard(true);      
       return search.simpleQueryStringSearch("state:mi").done(function(response) {
+        console.log(search.getSearchURL(true));
         console.log(response.hits);
       });
    }
@@ -139,14 +155,12 @@ define([
         .then(deleteIndexIfExists)
         .then(createIndex)
         .then(createDataInIndex)
+        .then(waitForDocCount)
         .then(performSearch)
-        .then(performSimpleSearch)
-        .then(getDocCount)
-        .then(performSimpleSearch)
-        .then(getDocCount);
+        .then(performSimpleSearch)                
+        
       
-   window.performSimpleSearch = performSimpleSearch;
-   window.getDocCount = getDocCount;
+   
         
    
        
