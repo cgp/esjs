@@ -31,7 +31,19 @@ define([
                     delim = "&";
                   }
                   return queryString;
-   }
+   },
+   "getQueryDSLStruct": function(queryDSLStruct) {      
+      // ends up getting used by Search,Query,Filter, so Utils is the most logical location
+      var keys = Object.keys(queryDSLStruct);
+      if (keys.length == 0) {
+        return null;
+      }
+      var body = {};
+      for(var x=0;x<keys.length;x++) {
+        body[keys[x]] = queryDSLStruct[keys[x]]();
+      }
+      return body;
+    }
   };
   
   
@@ -420,9 +432,19 @@ define([
         return url;  
       } 
       return url + "?" + Utils.serialize(this.searchUrlVals);
-    },
+    },    
     "getSearchBody": function() {
-      var query = {};      
+      var querySearchBody = {};      
+      var queryPart = this.query.getBody();
+      if (queryPart != null) {
+        querySearchBody.query = queryPart.query; // the root search should only have a query part, the filter portion is delegated to the post_filter, any filters are sub-filters of the query
+      }
+      var filterPart = this.post_filter.getBody();
+      if (filterPart != null) {
+        querySearchBody.post_filter = filterPart;
+      }
+      console.log(querySearchBody);
+      return querySearchBody;
     },
     /**
       http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-query-string-query.html
@@ -431,43 +453,91 @@ define([
     */
     "simpleQueryStringSearch": function(queryString, cacheName) {
       this.searchUrlVals.q = queryString;
-      return this.client.ajax(this.getSearchURL(true), null, cacheName, null);
-      console.log();
+      return this.client.ajax(this.getSearchURL(true), null, cacheName, null);      
     },
     "execute": function(cacheName) {
-      return this.client.ajax(this.getSearchURL(), this.getSearchBody(), cacheName, null);
+      var ajaxOpts = {
+        type: "POST"
+      };
+      return this.client.ajax(this.getSearchURL(), this.getSearchBody(), cacheName, ajaxOpts);
     }
   });
 
   // http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-queries.html
   ES.Query = function(parent) {
-    this.parent;
-    this.queries = [];
+    this.parent = parent;
+    this.query = {};    
     this.filter = new ES.Filter(this);
   }
 
-  $.extend(ES.Query.prototype, {
-    "matchAll": function() {
+  $.extend(ES.Query.prototype, {    
+    "up": function() {
+      return this.parent;
     },
-    "getQuery": function() {
-      var rootObj = {};
-      return "hallo";
+    "matchAll": function() {
+      this.query.matchAll = function() {
+        return {};
+      }
+      return this.parent;
+    },
+    "getBody": function() {
+      var querySearchBody = {};
+      var queryPart = Utils.getQueryDSLStruct(this.query);
+      if (queryPart != null) {
+        querySearchBody.query = queryPart; 
+      }
+      var filterPart = this.filter.getBody();
+      if (filterPart != null) {
+        querySearchBody.query.filter = filterPart;
+      }
+      if (Object.keys(querySearchBody).length > 0) {
+        return querySearchBody;
+      } else {
+        return null;
+      }
+    },
+    "constant_score": function(score) {           
+      var subQuery = new ES.Query(this.parent);
+      this.query.constant_score = function() {        
+        var queryPart = Utils.getQueryDSLStruct(this.subQuery);
+        var queryVal = {"boost": score};
+        if (queryPart != null) {
+          queryPart
+        }
+        return ;
+      }
+      return subQuery;
     }
+    
   });
 
   // http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-filters.html
   ES.Filter = function(parent) {
     this.parent = parent;
-    this.filters = [];
+    this.filter = {};
   }
 
-  $.extend(ES.Filter.prototype, {
+  $.extend(ES.Filter.prototype, {    
+    "up": function() {
+      return this.parent;
+    },
+    "getBody": function() {
+      var filterPart = Utils.getQueryDSLStruct(this.filter);
+      if (filterPart == null) {
+        return null;
+      } else {
+        return filterPart;
+      }      
+    },
     "term": function(term, values, opts) {
-      this.filters.push({
-
-      });
+      this.filter.term = function() {
+        var t = {};
+        t[term] = values;
+        return t;
+      }
+      return this.parent; // always return a level up, so additional layers can be chained
     }
-  });
+  })  
 
 	window.ES = ES;
 	return ES;

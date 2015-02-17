@@ -104,6 +104,8 @@ define([
    
    function performSearch() {
            var search = es.createSearch("names", "name");
+           search.post_filter.term("state", "mi");
+           
            console.log("performing search...");
      return search.execute().done(function(response) {
              console.log(response);
@@ -157,11 +159,6 @@ define([
         .then(createDataInIndex)
         .then(waitForDocCount)
         .then(performSearch)
-        .then(performSimpleSearch)                
-        
-      
-   
-        
-   
+        //.then(performSimpleSearch)                
        
 });
