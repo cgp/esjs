@@ -247,6 +247,7 @@ define([
         return new jQuery.Deferred().resolve(false);
       });
     },
+    
     /**
       Removes an index. Delete is a reserved keyword in JavaScript :(
 
@@ -482,7 +483,9 @@ define([
     },
     "getBody": function() {
       var querySearchBody = {};
+      console.log("--------", this.query);
       var queryPart = Utils.getQueryDSLStruct(this.query);
+      console.log(queryPart);
       if (queryPart != null) {
         querySearchBody.query = queryPart; 
       }
@@ -495,16 +498,80 @@ define([
       } else {
         return null;
       }
+    },    
+    "filtered": function() {
+      var subQuery = new ES.Query(this.parent);
+      this.query.filtered = function() {
+        var queryPart = subQuery.getBody(); // this subQuery is hidden, we probably need a way to get back at this subQuery
+        queryPart = queryPart == null ? {} : queryPart;
+        return queryPart;
+      }
+      return subQuery;
     },
+
+    "bool": function(condition, queries, boost, minimum_should_match) {
+      var t = function() {
+        var result = {};
+        if (condition == "should") {
+          result[condition] = [];
+          result[condition].concat
+        }
+        return result;
+      };
+      if (Utils.isUndefinedOrNull(this.query.bool)) {
+        this.query.bool = t;
+      }
+    },
+    
+    /**
+      Matches documents that have fields containing terms with a specified prefix (not analyzed). The prefix query maps to Lucene PrefixQuery. 
+      
+      http://www.elasticsearch.org/guide/en/elasticsearch/reference/master/query-dsl-prefix-query.html
+
+      @method prefix
+      @param {Object} fieldValueBoostPairs
+      @param {float} commonBoost - boost all prefix terms by a given amount (can be overridden by each pair)
+      @param {String} rewrite http://www.elasticsearch.org/guide/en/elasticsearch/reference/master/query-dsl-multi-term-rewrite.html
+      @return {boolean} response The response from the server. (true if successful)
+    */    
+    "prefix": function(fieldValueBoostPairs, commonBoost, rewrite) {      
+      this.query.prefix = function() {
+        var keys = Object.keys(fieldValueBoostPairs);
+        var prefixCfg = {};
+        for(var x=0;x<keys.length;x++) {
+          prefixCfg[keys[x]] = {"value": fieldValueBoostPairs[keys[x]].value};
+          if (typeof fieldValueBoostPairs[keys[x]].boost != "undefined") {
+            prefixCfg[keys[x]].boost = fieldValueBoostPairs[keys[x]].boost;
+          } else if (!Utils.isUndefinedOrNull(commonBoost)) {
+            prefixCfg[keys[x]].boost = commonBoost;
+          }                   
+        }
+        if (!Utils.isUndefinedOrNull(rewrite)) {
+          prefixCfg.rewrite = rewrite; 
+        }
+        return prefixCfg;
+      }
+      return this.parent;
+    },
+    
+    /**
+      A query that wraps a filter or another query and simply returns a constant score equal to the query boost for every document in the filter.
+      
+      http://www.elasticsearch.org/guide/en/elasticsearch/reference/master/query-dsl-constant-score-query.html
+
+      @method prefix
+      @param {Object} fieldPrefixAndBoostPairs
+      @param {float} commonBoost - boost all prefix terms by a given amount (can be overridden by each pair)
+      @param {String} rewrite http://www.elasticsearch.org/guide/en/elasticsearch/reference/master/query-dsl-multi-term-rewrite.html
+      @return {boolean} response The response from the server. (true if successful)
+    */
     "constant_score": function(score) {           
       var subQuery = new ES.Query(this.parent);
       this.query.constant_score = function() {        
-        var queryPart = Utils.getQueryDSLStruct(this.subQuery);
-        var queryVal = {"boost": score};
-        if (queryPart != null) {
-          queryPart
-        }
-        return ;
+        var queryPart = this.subQuery.getBody();
+        queryPart = queryPart == null ? {} : queryPart;
+        var scorePart = Utils.isUndefinedOrNull(score) ? {} : {boost: score};
+        return $.extend({}, queryPart, scorePart);
       }
       return subQuery;
     }

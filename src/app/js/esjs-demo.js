@@ -103,8 +103,11 @@ define([
    }
    
    function performSearch() {
-           var search = es.createSearch("names", "name");
-           search.post_filter.term("state", "mi");
+           var search = es.createSearch("names", "name");           
+           search
+             .post_filter.term("state", "mi")
+             .query.prefix({"first":{value:["a", "b"]}})
+             
            
            console.log("performing search...");
      return search.execute().done(function(response) {
@@ -138,7 +141,7 @@ define([
    function performSimpleSearch() {
       var search = es.createSearch();         
       search.setSize(25)
-               .setFields(['a','b','c'])
+               .setFields(['first','last','city'])
                .setTimeout("5m")
                .setTrackScores(false)         
                .setPageSize(25, 3)
