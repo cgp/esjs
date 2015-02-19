@@ -40,7 +40,11 @@ define([
       }
       var body = {};
       for(var x=0;x<keys.length;x++) {
-        body[keys[x]] = queryDSLStruct[keys[x]]();
+        if (typeof queryDSLStruct[keys[x]] == "function") {
+          body[keys[x]] = queryDSLStruct[keys[x]]();
+        } else {
+          body[keys[x]] = queryDSLStruct[keys[x]].getBody(); // a little presumptious, we'll get back to this
+        }
       }
       return body;
     }
@@ -51,6 +55,20 @@ define([
   // From https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/keys -- removed unless I hear complaints
 
 	var ES = {};
+  
+  ES.Node = function(parent, getBodyFunc) {
+    this.parent = parent;    
+    this.getBody = getBodyFunc;
+  }  
+  
+  var baseStuff = {
+    "up": function() {
+      return this.parent;
+    }
+  };
+  
+  $.extend(ES.Node.prototype, baseStuff);
+  
   /**
   Provides the base Widget class...
 
@@ -90,8 +108,7 @@ define([
       } else {
         return $.ajax(ajaxOpts);
       }
-    }
-    
+    }    
     this.indices = new ES.Indices(this);
   }
 
@@ -170,7 +187,7 @@ define([
     this.client = client;
   }
   
-  $.extend(ES.Indices.prototype, {
+  $.extend(ES.Indices.prototype, baseStuff, {
     "stats": function(indices, stats) {
       if (Utils.isUndefinedOrNull(indices)) {
         indices = "";
@@ -268,6 +285,7 @@ define([
       });
     }        
   });
+  
   
   // http://okfnlabs.org/blog/2013/07/01/elasticsearch-query-tutorial.html#match-all--find-everything
   // http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/search-request-body.html
@@ -434,7 +452,7 @@ define([
       } 
       return url + "?" + Utils.serialize(this.searchUrlVals);
     },    
-    "getSearchBody": function() {
+    "getBody": function() {
       var querySearchBody = {};      
       var queryPart = this.query.getBody();
       if (queryPart != null) {
@@ -460,21 +478,72 @@ define([
       var ajaxOpts = {
         type: "POST"
       };
-      return this.client.ajax(this.getSearchURL(), this.getSearchBody(), cacheName, ajaxOpts);
+      return this.client.ajax(this.getSearchURL(true), this.getBody(), cacheName, ajaxOpts);
     }
   });
-
-  // http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-queries.html
-  ES.Query = function(parent) {
+  
+  ES.Bool = function(parent) {
+    this.conds = {};
     this.parent = parent;
-    this.query = {};    
-    this.filter = new ES.Filter(this);
   }
 
-  $.extend(ES.Query.prototype, {    
-    "up": function() {
-      return this.parent;
+  $.extend(ES.Bool.prototype, baseStuff, {    
+    "getBody": function() {
+      var result = {};
+      if (this.conds['should']) {
+        result.should = [];
+        for(var x=0;x<this.conds['should'].length;x++) {          
+          var q = this.conds['should'][x];          
+          console.log("xxxxxxxx",this.conds, result, q);
+          result.should.push(q.getBody());
+        }
+      }
+      if (this.conds['must']) {
+        result.must = this.conds.must.getBody();
+      }
+      if (this.conds['must_not']) {
+        result.must_not = this.conds.must_not.getBody();
+      }
+      return result;
     },
+    "should": function() {
+      if (typeof this.conds['should'] == "undefined") {
+        this.conds['should'] = [];
+      }      
+      var q = new ES.Query(this, true);
+      this.conds['should'].push(q);
+      return q;
+    },
+    "must": function() {
+      if (typeof this.conds['must'] == "undefined") {
+        this.conds['must'] = new ES.Query(this);
+      }
+      return this.conds['must'];
+    },
+    "must_not": function() {
+      if (typeof this.conds['must_not'] == "undefined") {
+        this.conds['must_not'] = new ES.Query(this);
+      }
+      return this.conds['must_not'];
+    },
+    "boost": function(val) {
+      this.boost = val;
+    },
+    "minimum_should_match": function(val) {
+      this.minimum_should_match = val;
+    }
+  });  
+   
+  // http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-queries.html
+  ES.Query = function(parent, queryOnly) {
+    this.parent = parent;
+    this.query = {};    
+    this.objs = {};    
+    this.queryOnly = ((typeof queryOnly != "undefined") && queryOnly) ? queryOnly : false;
+    this.filter = new ES.Filter(this);
+  }
+  
+  $.extend(ES.Query.prototype, baseStuff, {        
     "matchAll": function() {
       this.query.matchAll = function() {
         return {};
@@ -483,12 +552,15 @@ define([
     },
     "getBody": function() {
       var querySearchBody = {};
-      console.log("--------", this.query);
+      //console.log("--------", this.query);
       var queryPart = Utils.getQueryDSLStruct(this.query);
-      console.log(queryPart);
+      //console.log(queryPart);
       if (queryPart != null) {
+        if (this.queryOnly) {
+          return queryPart;
+        }
         querySearchBody.query = queryPart; 
-      }
+      }      
       var filterPart = this.filter.getBody();
       if (filterPart != null) {
         querySearchBody.query.filter = filterPart;
@@ -499,59 +571,60 @@ define([
         return null;
       }
     },    
-    "filtered": function() {
-      var subQuery = new ES.Query(this.parent);
-      this.query.filtered = function() {
-        var queryPart = subQuery.getBody(); // this subQuery is hidden, we probably need a way to get back at this subQuery
-        queryPart = queryPart == null ? {} : queryPart;
-        return queryPart;
+    "filtered": function() {      
+      if (!this.query.filtered) {
+        var subQuery = new ES.Query(this.parent);      
+        this.query.filtered = new ES.Node(this, subQuery.getBody);
       }
+      return this.query.filtered.subQuery;      
       return subQuery;
     },
-
-    "bool": function(condition, queries, boost, minimum_should_match) {
-      var t = function() {
-        var result = {};
-        if (condition == "should") {
-          result[condition] = [];
-          result[condition].concat
-        }
-        return result;
-      };
-      if (Utils.isUndefinedOrNull(this.query.bool)) {
-        this.query.bool = t;
+    "bool": function(cond) {
+      if (typeof this.query.bool == "undefined") {             
+        this.query.bool = new ES.Bool(this);        
       }
-    },
-    
+      if (typeof cond != "undefined") {        
+        return this.query.bool[cond]();
+      } else {
+        return this.query.bool;        
+      }
+    },    
     /**
       Matches documents that have fields containing terms with a specified prefix (not analyzed). The prefix query maps to Lucene PrefixQuery. 
       
+      TODO: perhaps we'll restructure this to // prefix: function(field, value, boost), returning a ES.Prefix obj
+      
       http://www.elasticsearch.org/guide/en/elasticsearch/reference/master/query-dsl-prefix-query.html
 
-      @method prefix
-      @param {Object} fieldValueBoostPairs
+      @method prefix Matches documents that have fields containing terms with a specified prefix (not analyzed).
+      @param {Object} fieldValueBoostPairs Object that adheres to the following format 
+                 {"<term_name>": {"value": "<prefix_to_match>", "boost": "<boost_val>"}} 
+                 only one prefix to match per term, otherwise use a should
+                 https://gist.github.com/jprante/bdf9a9755a64bc23afbe
       @param {float} commonBoost - boost all prefix terms by a given amount (can be overridden by each pair)
       @param {String} rewrite http://www.elasticsearch.org/guide/en/elasticsearch/reference/master/query-dsl-multi-term-rewrite.html
       @return {boolean} response The response from the server. (true if successful)
     */    
-    "prefix": function(fieldValueBoostPairs, commonBoost, rewrite) {      
-      this.query.prefix = function() {
-        var keys = Object.keys(fieldValueBoostPairs);
-        var prefixCfg = {};
-        for(var x=0;x<keys.length;x++) {
-          prefixCfg[keys[x]] = {"value": fieldValueBoostPairs[keys[x]].value};
-          if (typeof fieldValueBoostPairs[keys[x]].boost != "undefined") {
-            prefixCfg[keys[x]].boost = fieldValueBoostPairs[keys[x]].boost;
-          } else if (!Utils.isUndefinedOrNull(commonBoost)) {
-            prefixCfg[keys[x]].boost = commonBoost;
-          }                   
-        }
-        if (!Utils.isUndefinedOrNull(rewrite)) {
-          prefixCfg.rewrite = rewrite; 
-        }
-        return prefixCfg;
-      }
-      return this.parent;
+    "prefix": function(fieldValueBoostPairs, commonBoost, rewrite) {            
+      if (typeof this.query.prefix == "undefined") {
+        this.query.prefix = new ES.Node(this, function() {
+          var keys = Object.keys(fieldValueBoostPairs);
+          var prefixCfg = {};
+          for(var x=0;x<keys.length;x++) {
+            prefixCfg[keys[x]] = {"value": fieldValueBoostPairs[keys[x]].value};
+            if (typeof fieldValueBoostPairs[keys[x]].boost != "undefined") {
+              prefixCfg[keys[x]].boost = fieldValueBoostPairs[keys[x]].boost;
+            } else if (!Utils.isUndefinedOrNull(commonBoost)) {
+              prefixCfg[keys[x]].boost = commonBoost;
+            }                   
+          }
+          if (!Utils.isUndefinedOrNull(rewrite)) {
+            prefixCfg.rewrite = rewrite; 
+          }
+          return prefixCfg;
+        });
+      };      
+      return this.query.prefix;
     },
     
     /**
@@ -584,10 +657,7 @@ define([
     this.filter = {};
   }
 
-  $.extend(ES.Filter.prototype, {    
-    "up": function() {
-      return this.parent;
-    },
+  $.extend(ES.Filter.prototype, baseStuff, {        
     "getBody": function() {
       var filterPart = Utils.getQueryDSLStruct(this.filter);
       if (filterPart == null) {
@@ -596,13 +666,13 @@ define([
         return filterPart;
       }      
     },
-    "term": function(term, values, opts) {
-      this.filter.term = function() {
-        var t = {};
-        t[term] = values;
-        return t;
-      }
-      return this.parent; // always return a level up, so additional layers can be chained
+    "term": function(term, values, opts) {      
+      this.filter.term = new ES.Node(this, function() {
+          var t = {};
+          t[term] = values;
+          return t;
+      });
+      return this.filter.term; 
     }
   })  
 

@@ -105,14 +105,30 @@ define([
    function performSearch() {
            var search = es.createSearch("names", "name");           
            search
-             .post_filter.term("state", "mi")
-             .query.prefix({"first":{value:["a", "b"]}})
+             .post_filter.term("state", "mi").up().up()
+             .query.prefix({"first":{value:"a"}});
              
-           
-           console.log("performing search...");
      return search.execute().done(function(response) {
              console.log(response);
      });           
+   }
+   
+    function performSearchTestBool() {
+      var search = es.createSearch("names", "name");                 
+      var t = search
+                .post_filter.term("state", "mi").up().up()
+                .query.bool()
+                    .should().prefix({"first":{value:"a"}}).up().up()
+                    .should().prefix({"first":{value:"b"}}).up().up()
+                  .up().up()
+              .setSize(100);
+      
+      // select * from names where (state = "mi") and (first ~= a*)
+                    
+      //console.log(search.getBody());              
+      return search.execute().done(function(response) {
+        console.log(response);
+      });           
    }
       
    function checkDocCount(dfd, timeToWait) {
@@ -157,11 +173,12 @@ define([
    
    console.log(es.indices, es.baseURL);
    es.indices.exists("names")
-        .then(deleteIndexIfExists)
-        .then(createIndex)
-        .then(createDataInIndex)
-        .then(waitForDocCount)
-        .then(performSearch)
+//        .then(deleteIndexIfExists)
+//        .then(createIndex)
+//        .then(createDataInIndex)
+//        .then(waitForDocCount)
+//        .then(performSearch)
+        .then(performSearchTestBool);
         //.then(performSimpleSearch)                
        
 });
