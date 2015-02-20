@@ -35,19 +35,19 @@ define([
    "getVal": function(val) {
         if (typeof val == "function") {
           return val();
-        } 
+        }
         if (Array.isArray(val)) {
           var result = [];
-          for(var x=0;x<val.length;x++) {            
-            result.push(Utils.getVal(val[x]));           
+          for(var x=0;x<val.length;x++) {
+            result.push(Utils.getVal(val[x]));
           }
           return result;
-        } 
+        }
         if ((typeof val == "object") && (val.getBody)) {
-          return val.getBody(); 
-        } 
+          return val.getBody();
+        }
         return val;
-   },   
+   },
    "getQueryDSLStruct": function(queryDSLStruct) {
       // ends up getting used by Search,Query,Filter, so Utils is the most logical location
       //console.log(queryDSLStruct);
@@ -470,7 +470,7 @@ define([
       var filterPart = this.post_filter.getBody();
       if (filterPart != null) {
         querySearchBody.post_filter = filterPart;
-      }      
+      }
       return querySearchBody;
     },
     /**
@@ -488,69 +488,190 @@ define([
       };
       return this.client.ajax(this.getSearchURL(true), this.getBody(), cacheName, ajaxOpts);
     }
-  });  
-  
+  });
+
   ES.FieldTypes = {
     "queryArray": {
-      "getGetter": function(fieldName) {
+      "accessor": function(fieldName) {
         return function() {
-            if (typeof this.values[fieldName] == "undefined") {                  
+            if (typeof this.values[fieldName] == "undefined") {
               this.values[fieldName] = [];
             }
-            var q = new ES.Query(this, true);                
+            var q = new ES.Query(this, true);
             this.values[fieldName].push(q);
             return q;
         };
       }
     },
     "value": {
-      "getGetter": function(fieldName) {
-        return function(value) {            
+      "accessor": function(fieldName) {
+        return function(value) {
             this.values[fieldName] = value;
             return this;
         };
       }
-    }
+    },
+    "commonValue": {
+      "accessor": function(fieldName) {
+        return function(term, query, cutoff_frequency, low_freq_operator,  minimum_should_match) {
+            if (typeof this.values[fieldName] == "undefined") {
+              this.values[fieldName] = {};
+            }
+            this.values[fieldName][term] = {};
+            this.values[fieldName][term].query = query;
+            this.values[fieldName][term].cutoff_frequency = cutoff_frequency;
+            if (!Utils.isUndefinedOrNull(low_freq_operator)) {
+              this.values[fieldName][term].low_freq_operator = low_freq_operator;
+            }
+            if (!Utils.isUndefinedOrNull(minimum_should_match)) {
+              this.values[fieldName][term].low_freq_operator = minimum_should_match;
+            }
+            return this;
+        };
+      }
+    },
+    "fuzzyValue": {
+      "accessor": function(fieldName) {
+        return function(term, value, boost, fuzziness,  prefix_length, max_expansions) {
+            if (typeof this.values[fieldName] == "undefined") {
+              this.values[fieldName] = {};
+            }
+            this.values[fieldName][term] = {};
+            this.values[fieldName][term].value = value;
+            if (!Utils.isUndefinedOrNull(boost)) { this.values[fieldName][term].boost = boost; }
+            if (!Utils.isUndefinedOrNull(fuzziness)) { this.values[fieldName][term].fuzziness = fuzziness; }
+            if (!Utils.isUndefinedOrNull(prefix_length)) { this.values[fieldName][term].prefix_length = prefix_length; }
+            if (!Utils.isUndefinedOrNull(max_expansions)) { this.values[fieldName][term].max_expansions = max_expansions; }
+            return this;
+        };
+      }
+    },
+    "boostTypeValue": {
+      "accessor": function(fieldName) {
+        return function() {
+            if (typeof this.values.bool == "undefined") {
+              this.values.boosting = new ES.Boosting(this);
+            }
+            return this.values.boosting;
+        };
+      }
+    },
+    "boolTypeValue": {
+      "accessor": function(fieldName) {
+        return function(value) {
+            if (typeof this.values.bool == "undefined") {
+              this.values.bool = new ES.Bool(this);
+            }
+            return this.values.bool;
+        };
+      }
+    },
+    "dismaxTypeValue": {
+      "accessor": function(fieldName) {
+        return function(value) {
+            if (typeof this.values.dis_max == "undefined") {
+              this.values.dis_max = new ES.DisMax(this);
+            }
+            return this.values.dis_max;
+        };
+      }
+    },
+    "fltTypeValue": {
+      "accessor": function(fieldName) {
+        return function(value) {
+            if (typeof this.values.flt == "undefined") {
+              this.values.flt = new ES.FuzzyLikeThis(this);
+            }
+            return this.values.flt;
+        };
+      }
+    },
   };
-  
-  ES.Bool = function(parent, fields) {    
-    this.parent = parent;    
+
+  ES.Bool = function(parent, fields) {
+    this.parent = parent;
     this.values = {};
     var fields = {
         'must': {'type': 'queryArray'},
         'should': {'type': 'queryArray'},
         'must_not': {'type': 'queryArray'},
         'minimum_should_match': {'type': 'value'},
-        'boost': {'type': 'value'},        
+        'boost': {'type': 'value'},
     };
     for(fieldName in fields) {
-        this[fieldName] = ES.FieldTypes[fields[fieldName].type].getGetter(fieldName);
+        this[fieldName] = ES.FieldTypes[fields[fieldName].type].accessor(fieldName);
     }
     this.getBody = function() { return Utils.getQueryDSLStruct(this.values); }
   }
   $.extend(ES.Bool.prototype, baseStuff);
 
-  ES.Boosting = function(parent) {     
+  ES.Boosting = function(parent) {
     this.parent = parent;
     this.values = {};
     var fields = {
        'positive': {'type': 'queryArray'},
-       'negative': {'type': 'queryArray'},                
-       'boost': {'type': 'value'},        
-       'negative_boost': {'type': 'value'},        
+       'negative': {'type': 'queryArray'},
+       'boost': {'type': 'value'},
+       'negative_boost': {'type': 'value'},
     };
     for(fieldName in fields) {
-       this[fieldName] = ES.FieldTypes[fields[fieldName].type].getGetter(fieldName);
-    }     
+       this[fieldName] = ES.FieldTypes[fields[fieldName].type].accessor(fieldName);
+    }
     this.getBody = function() { return Utils.getQueryDSLStruct(this.values); }
-  }   
+  }
   $.extend(ES.Boosting.prototype, baseStuff);
-  
+
+  ES.DisMax = function(parent) {
+    this.parent = parent;
+    this.values = {};
+    var fields = {
+       'queries': {'type': 'queryArray'},
+       'boost': {'type': 'value'},
+       'tie_breaker': {'type': 'value'},
+    };
+    for(fieldName in fields) {
+       this[fieldName] = ES.FieldTypes[fields[fieldName].type].accessor(fieldName);
+    }
+    this.getBody = function() { return Utils.getQueryDSLStruct(this.values); }
+  }
+  $.extend(ES.DisMax.prototype, baseStuff);
+
+  ES.FuzzyLikeThis = function(parent) {
+    this.parent = parent;
+    this.values = {};
+    var fields = {
+       'fields': {'type': 'value'},
+       'like_text': {'type': 'value'},
+       'ignore_tf': {'type': 'value'},
+       'max_query_terms': {'type': 'value'},
+       'fuzziness': {'type': 'value'},
+       'prefix_length': {'type': 'value'},
+       'boost': {'type': 'value'},
+       'analyzer': {'type': 'value'},
+    };
+    for(fieldName in fields) {
+       this[fieldName] = ES.FieldTypes[fields[fieldName].type].accessor(fieldName);
+    }
+    this.getBody = function() { return Utils.getQueryDSLStruct(this.values); }
+  }
+  $.extend(ES.FuzzyLikeThis.prototype, baseStuff);
+
   // http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-queries.html
   ES.Query = function(parent, queryOnly) {
     this.parent = parent;
-    this.query = {};
-    this.objs = {};
+    this.values = {};
+    var fields = {
+       'boosting': {'type': 'boostTypeValue'},
+       'bool': {'type': 'boolTypeValue'},
+       'dis_max': {'type': 'dismaxTypeValue'},
+       'flt': {'type': 'fltTypeValue'},
+       'fuzzy_like_this': {'type': 'fltTypeValue'},
+       'fuzzy': {'type': 'fuzzyValue'}
+
+    };
+    for(fieldName in fields) {
+       this[fieldName] = ES.FieldTypes[fields[fieldName].type].accessor(fieldName);
+    }
     this.queryOnly = ((typeof queryOnly != "undefined") && queryOnly) ? queryOnly : false;
     this.filter = new ES.Filter(this);
   }
@@ -558,8 +679,8 @@ define([
   $.extend(ES.Query.prototype, baseStuff, {
     "getBody": function() {
       var querySearchBody = {};
-      //console.log("--------", this.query);
-      var queryPart = Utils.getQueryDSLStruct(this.query);
+      //console.log("--------", this.values);
+      var queryPart = Utils.getQueryDSLStruct(this.values);
       //console.log(queryPart);
       if (queryPart != null) {
         if (this.queryOnly) {
@@ -577,18 +698,7 @@ define([
         return null;
       }
     },
-    "bool": function() {
-      if (typeof this.query.bool == "undefined") {
-        this.query.bool = new ES.Bool(this);
-      }      
-      return this.query.bool;      
-    },
-    "boosting": function() {
-      if (typeof this.query.bool == "undefined") {
-        this.query.boosting = new ES.Boosting(this);
-      }
-      return this.query.boosting;
-    },
+
      /**
       A query that wraps a filter or another query and simply returns a constant score equal to the query boost for every document in the filter.
 
@@ -602,7 +712,7 @@ define([
     */
     "constant_score": function(score) {
       var subQuery = new ES.Query(this.parent);
-      this.query.constant_score = function() {
+      this.values.constant_score = function() {
         var queryPart = this.subQuery.getBody();
         queryPart = queryPart == null ? {} : queryPart;
         var scorePart = Utils.isUndefinedOrNull(score) ? {} : {boost: score};
@@ -611,19 +721,19 @@ define([
       return subQuery;
     },
     "filtered": function() {
-      if (!this.query.filtered) {
+      if (!this.values.filtered) {
         var subQuery = new ES.Query(this.parent);
-        this.query.filtered = new ES.Node(this, subQuery.getBody);
+        this.values.filtered = new ES.Node(this, subQuery.getBody);
       }
-      return this.query.filtered.subQuery;
+      return this.values.filtered.subQuery;
       return subQuery;
-    },    
+    },
     "matchAll": function() {
-      this.query.matchAll = new ES.Node(this, function() {
+      this.values.matchAll = new ES.Node(this, function() {
         return {};
       });
-      return this.query.matchAll;
-    },       
+      return this.values.matchAll;
+    },
     /**
       Matches documents that have fields containing terms with a specified prefix (not analyzed). The prefix query maps to Lucene PrefixQuery.
 
@@ -639,8 +749,8 @@ define([
       @return {boolean} response The response from the server. (true if successful)
     */
     "prefix": function(fieldValueBoostPairs, commonBoost, rewrite) {
-      if (typeof this.query.prefix == "undefined") {
-        this.query.prefix = new ES.Node(this, function() {
+      if (typeof this.values.prefix == "undefined") {
+        this.values.prefix = new ES.Node(this, function() {
           var keys = Object.keys(fieldValueBoostPairs);
           var prefixCfg = {};
           for(var x=0;x<keys.length;x++) {
@@ -657,8 +767,8 @@ define([
           return prefixCfg;
         });
       };
-      return this.query.prefix;
-    },    
+      return this.values.prefix;
+    },
   });
 
   // http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-filters.html

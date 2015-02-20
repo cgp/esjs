@@ -7,12 +7,14 @@ Done - Code Support, Documented, Tested
 Mostly Done - Coded but either Documented or Tested, but not both
 Coded - Code support
 
+
+
 Query Type                    | Status
 ------------------------------|-----------
 match query                   |  
 multi match query             | 
 bool query                    | Coded
-boosting query                |
+boosting query                | Coded
 common terms query            |
 constant score query          | Mostly Done
 dis max query                 |
