@@ -624,7 +624,7 @@ define([
                    'locale': {'type': 'value'},
                    'lenient': {'type': 'value'}
                  }
-    }
+    },
     "queryArray": {
       "accessor": function(fieldName) {
         return function() {
