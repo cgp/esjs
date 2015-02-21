@@ -497,23 +497,20 @@ define([
                 'must_not': {'type': 'queryArray'},
                 'minimum_should_match': {'type': 'value'},
                 'boost': {'type': 'value'},
-             },
-             'accessor': 'simpleType'
-            },
+             }
+    },
     "Boosting": {'fields': {
                    'positive': {'type': 'queryArray'},
                    'negative': {'type': 'queryArray'},
                    'boost': {'type': 'value'},
                    'negative_boost': {'type': 'value'},
-                 },
-             'accessor': 'simpleType'
-     },             
+                 }
+     },
     "DisMax": {'fields': {
                  'queries': {'type': 'queryArray'},
                  'boost': {'type': 'value'},
                  'tie_breaker': {'type': 'value'},
                 },
-             'accessor': 'simpleType'
     },
     "FuzzyLikeThis": {'fields': {
                          'fields': {'type': 'value'},
@@ -525,15 +522,109 @@ define([
                          'boost': {'type': 'value'},
                          'analyzer': {'type': 'value'}
                      },
-              'accessor': 'simpleType'
     },
     "HasChild": {'fields': {
                    'query': {'type': 'queryTypeValue'},
                    'type': {'type': 'value'},
                    'filter': {'type': 'filterTypeValue'},
+                   'score_mode': {'type': 'value'},
+                   'min_children': {'type': 'value'},
+                   'max_children': {'type': 'value'}
+                }
+    },
+    "HasParent": {'fields': {
+                   'query': {'type': 'queryTypeValue'},
+                   'parent_type': {'type': 'value'},
+                   'score_mode': {'type': 'value'}
                 },
-              'accessor': 'simpleType'
-    },    
+    },
+    "Ids": {'fields': {
+                   'type': {'type': 'value'},
+                   'values': {'type': 'value'}
+                }
+    },
+    "Indices": {'fields': {
+                   'query': {'type': 'queryTypeValue'},
+                   'no_match_query': {'type': 'queryTypeValue'},
+                   'indices': {'type': 'value'}
+                }
+    },
+    "MatchAll": {'fields': {
+                   'boost': {'type': 'value'},
+                }
+    },
+    "MoreLikeThis": {
+                 'fields': {
+                   'fields': {'type': 'value'},
+                   'like_text': {'type': 'value'},
+                   'docs': {'type': 'value'},
+                   'ids': {'type': 'value'},
+                   'include': {'type': 'value'},
+                   'exclude': {'type': 'value'},
+                   'percent_terms_to_match': {'type': 'value'},
+                   'min_term_freq': {'type': 'value'},
+                   'max_query_terms': {'type': 'value'},
+                   'stop_words': {'type': 'value'},
+                   'min_doc_freq': {'type': 'value'},
+                   'max_doc_freq': {'type': 'value'},
+                   'min_word_length': {'type': 'value'},
+                   'max_word_length': {'type': 'value'},
+                   'boost_terms': {'type': 'value'},
+                   'boost': {'type': 'value'},
+                   'analyzer': {'type': 'value'}
+                 }
+    },
+    "MoreLikeThis": {
+                 'fields': {
+                   'fields': {'type': 'value'},
+                   'like_text': {'type': 'value'},
+                   'docs': {'type': 'value'},
+                   'ids': {'type': 'value'},
+                 }
+    },
+    "Nested": {
+                 'fields': {
+                   'query': {'type': 'queryTypeValue'},
+                   'path': {'type': 'value'},
+                   'score_mode': {'type': 'value'}
+                 }
+    },
+    "QueryString": {
+                 'fields': {
+                   'query': {'type': 'value'},
+                   'default_field': {'type': 'value'},
+                   'default_operator': {'type': 'value'},
+                   'analyzer': {'type': 'value'},
+                   'allow_leading_wildcard': {'type': 'value'},
+                   'lowercase_expanded_terms': {'type': 'value'},
+                   'enable_position_increments': {'type': 'value'},
+                   'fuzzy_max_expansions': {'type': 'value'},
+                   'fuzziness': {'type': 'value'},
+                   'fuzzy_prefix_length': {'type': 'value'},
+                   'phrase_slop': {'type': 'value'},
+                   'boost': {'type': 'value'},
+                   'analyze_wildcard': {'type': 'value'},
+                   'auto_generate_phrase_queries': {'type': 'value'},
+                   'max_determinized_states': {'type': 'value'},
+                   'minimum_should_match': {'type': 'value'},
+                   'lenient': {'type': 'value'},
+                   'locale': {'type': 'value'},
+                   'use_dis_max': {'type': 'value'},
+                   'tie_breaker': {'type': 'value'},
+                 }
+    },
+    "SimpleQueryString": {
+                 'fields': {
+                   'query': {'type': 'value'},
+                   'fields': {'type': 'value'},
+                   'default_operator': {'type': 'value'},
+                   'analyzer': {'type': 'value'},
+                   'flags': {'type': 'value'},
+                   'lowercase_expanded_terms': {'type': 'value'},
+                   'locale': {'type': 'value'},
+                   'lenient': {'type': 'value'}
+                 }
+    }
     "queryArray": {
       "accessor": function(fieldName) {
         return function() {
@@ -545,7 +636,7 @@ define([
             return q;
         };
       }
-    },    
+    },
     "value": {
       "accessor": function(fieldName) {
         return function(value) {
@@ -556,7 +647,7 @@ define([
     },
     "commonValue": {
       "accessor": function(fieldName) {
-        return function(term, query, cutoff_frequency, low_freq_operator,  minimum_should_match) {            
+        return function(term, query, cutoff_frequency, low_freq_operator,  minimum_should_match) {
             this.values[fieldName][term] = {};
             this.values[fieldName][term].query = query;
             this.values[fieldName][term].cutoff_frequency = cutoff_frequency;
@@ -572,7 +663,7 @@ define([
     },
     "fuzzyValue": {
       "accessor": function(fieldName) {
-        return function(term, value, boost, fuzziness,  prefix_length, max_expansions) {            
+        return function(term, value, boost, fuzziness,  prefix_length, max_expansions) {
             this.values[fieldName][term] = {};
             this.values[fieldName][term].value = value;
             if (!Utils.isUndefinedOrNull(boost)) { this.values[fieldName][term].boost = boost; }
@@ -585,12 +676,12 @@ define([
     },
     "geoShapeValue": { //// http://www.elasticsearch.org/guide/en/elasticsearch/reference/master/mapping-geo-shape-type.html
       "accessor": function(fieldName) {
-        return function(term, shapeType, coordinates_or_id, type, index, path) {            
+        return function(term, shapeType, coordinates_or_id, type, index, path) {
             this.values[fieldName][term] = {};
             if (shapeType == "indexed_shape") {
               this.values[fieldName][term].shape = {};
               this.values[fieldName][term].shape.coordinates = coordinates_or_id;
-              this.values[fieldName][term].shape.type = shapeType;            
+              this.values[fieldName][term].shape.type = shapeType;
             } else {
               this.values[fieldName][term].indexed_shape = {
                         "id": coordinates_or_id,
@@ -602,13 +693,13 @@ define([
             return this;
         };
       }
-    },    
+    },
     "queryTypeValue": {
       "accessor": function(fieldName) {
         return function() {
             if (typeof this.values[fieldName] == "undefined") {
               this.values[fieldName] = new ES.Query(this, true);
-            }            
+            }
             return this.values[fieldName];
         };
       }
@@ -618,41 +709,41 @@ define([
         return function() {
             if (typeof this.values[fieldName] == "undefined") {
               this.values[fieldName] = new ES.Filter(this);
-            }            
+            }
             return this.values[fieldName];
         };
       }
     },
   };
-  
+
   function createType(typeInfo) {
     var FieldType = function(parent) {
       this.parent = parent;
-      this.values = {};      
-      for(fieldName in typeInfo.fields) {        
+      this.values = {};
+      for(fieldName in typeInfo.fields) {
         this[fieldName] = ES.FieldTypes[typeInfo.fields[fieldName].type].accessor(fieldName);
-      }      
+      }
       this.getBody = function() { return Utils.getQueryDSLStruct(this.values); }
-    }    
-    $.extend(FieldType.prototype, baseStuff);    
+    }
+    $.extend(FieldType.prototype, baseStuff);
     typeInfo.accessor = function(fieldName) {
           return function() {
             if (typeof this.values[fieldName] == "undefined") {
               this.values[fieldName] = new FieldType(this);
             }
             return this.values[fieldName];
-          };        
+          };
     };
     console.log(typeInfo.accessor);
     return FieldType;
   }
-  
+
   for(type in ES.FieldTypes) {
-    if (typeof ES.FieldTypes[type].accessor == "string") {      
-      ES.FieldTypes[type].constructor = createType(ES.FieldTypes[type]); //sets the accessor and the constructor for a simple type       
+    if (typeof ES.FieldTypes[type].accessor == "undefined") {
+      ES.FieldTypes[type].constructor = createType(ES.FieldTypes[type]); //sets the accessor and the constructor for a simple type
     }
-  }      
-  
+  }
+
   // http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-queries.html
   ES.Query = function(parent, queryOnly) {
     this.parent = parent;
@@ -726,12 +817,6 @@ define([
       }
       return this.values.filtered.subQuery;
       return subQuery;
-    },
-    "matchAll": function() {
-      this.values.matchAll = new ES.Node(this, function() {
-        return {};
-      });
-      return this.values.matchAll;
     },
     /**
       Matches documents that have fields containing terms with a specified prefix (not analyzed). The prefix query maps to Lucene PrefixQuery.

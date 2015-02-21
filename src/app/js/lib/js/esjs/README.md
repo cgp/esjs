@@ -25,16 +25,16 @@ function score query          |
 fuzzy query                   | Coded
 geoshape query                | Coded
 has child query               | Coded
-has parent query              |
-ids query                     |
-indices query                 |
+has parent query              | Coded
+ids query                     | Coded
+indices query                 | Coded
 match all query               | Coded
-more like this query          |
-more like this field query    |
-nested query                  |
+more like this query          | Coded
+more like this field query    | *deprecated, so not coded*
+nested query                  | Coded
 prefix query                  | Done
-query string query            |
-simple query string query     |
+query string query            | Coded
+simple query string query     | Coded
 range query                   |
 regexp query                  |
 span first query              |
