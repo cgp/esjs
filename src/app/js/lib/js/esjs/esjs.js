@@ -491,6 +491,49 @@ define([
   });
 
   ES.FieldTypes = {
+    "Bool": {'fields': {
+                'must': {'type': 'queryArray'},
+                'should': {'type': 'queryArray'},
+                'must_not': {'type': 'queryArray'},
+                'minimum_should_match': {'type': 'value'},
+                'boost': {'type': 'value'},
+             },
+             'accessor': 'simpleType'
+            },
+    "Boosting": {'fields': {
+                   'positive': {'type': 'queryArray'},
+                   'negative': {'type': 'queryArray'},
+                   'boost': {'type': 'value'},
+                   'negative_boost': {'type': 'value'},
+                 },
+             'accessor': 'simpleType'
+     },             
+    "DisMax": {'fields': {
+                 'queries': {'type': 'queryArray'},
+                 'boost': {'type': 'value'},
+                 'tie_breaker': {'type': 'value'},
+                },
+             'accessor': 'simpleType'
+    },
+    "FuzzyLikeThis": {'fields': {
+                         'fields': {'type': 'value'},
+                         'like_text': {'type': 'value'},
+                         'ignore_tf': {'type': 'value'},
+                         'max_query_terms': {'type': 'value'},
+                         'fuzziness': {'type': 'value'},
+                         'prefix_length': {'type': 'value'},
+                         'boost': {'type': 'value'},
+                         'analyzer': {'type': 'value'}
+                     },
+              'accessor': 'simpleType'
+    },
+    "HasChild": {'fields': {
+                   'query': {'type': 'queryTypeValue'},
+                   'type': {'type': 'value'},
+                   'filter': {'type': 'filterTypeValue'},
+                },
+              'accessor': 'simpleType'
+    },    
     "queryArray": {
       "accessor": function(fieldName) {
         return function() {
@@ -502,7 +545,7 @@ define([
             return q;
         };
       }
-    },
+    },    
     "value": {
       "accessor": function(fieldName) {
         return function(value) {
@@ -513,10 +556,7 @@ define([
     },
     "commonValue": {
       "accessor": function(fieldName) {
-        return function(term, query, cutoff_frequency, low_freq_operator,  minimum_should_match) {
-            if (typeof this.values[fieldName] == "undefined") {
-              this.values[fieldName] = {};
-            }
+        return function(term, query, cutoff_frequency, low_freq_operator,  minimum_should_match) {            
             this.values[fieldName][term] = {};
             this.values[fieldName][term].query = query;
             this.values[fieldName][term].cutoff_frequency = cutoff_frequency;
@@ -532,10 +572,7 @@ define([
     },
     "fuzzyValue": {
       "accessor": function(fieldName) {
-        return function(term, value, boost, fuzziness,  prefix_length, max_expansions) {
-            if (typeof this.values[fieldName] == "undefined") {
-              this.values[fieldName] = {};
-            }
+        return function(term, value, boost, fuzziness,  prefix_length, max_expansions) {            
             this.values[fieldName][term] = {};
             this.values[fieldName][term].value = value;
             if (!Utils.isUndefinedOrNull(boost)) { this.values[fieldName][term].boost = boost; }
@@ -546,130 +583,92 @@ define([
         };
       }
     },
-    "boostTypeValue": {
+    "geoShapeValue": { //// http://www.elasticsearch.org/guide/en/elasticsearch/reference/master/mapping-geo-shape-type.html
+      "accessor": function(fieldName) {
+        return function(term, shapeType, coordinates_or_id, type, index, path) {            
+            this.values[fieldName][term] = {};
+            if (shapeType == "indexed_shape") {
+              this.values[fieldName][term].shape = {};
+              this.values[fieldName][term].shape.coordinates = coordinates_or_id;
+              this.values[fieldName][term].shape.type = shapeType;            
+            } else {
+              this.values[fieldName][term].indexed_shape = {
+                        "id": coordinates_or_id,
+                        "type": type,
+                        "index": index,
+                        "path": path
+              };
+            }
+            return this;
+        };
+      }
+    },    
+    "queryTypeValue": {
       "accessor": function(fieldName) {
         return function() {
-            if (typeof this.values.bool == "undefined") {
-              this.values.boosting = new ES.Boosting(this);
-            }
-            return this.values.boosting;
+            if (typeof this.values[fieldName] == "undefined") {
+              this.values[fieldName] = new ES.Query(this, true);
+            }            
+            return this.values[fieldName];
         };
       }
     },
-    "boolTypeValue": {
+    "filterTypeValue": {
       "accessor": function(fieldName) {
-        return function(value) {
-            if (typeof this.values.bool == "undefined") {
-              this.values.bool = new ES.Bool(this);
-            }
-            return this.values.bool;
-        };
-      }
-    },
-    "dismaxTypeValue": {
-      "accessor": function(fieldName) {
-        return function(value) {
-            if (typeof this.values.dis_max == "undefined") {
-              this.values.dis_max = new ES.DisMax(this);
-            }
-            return this.values.dis_max;
-        };
-      }
-    },
-    "fltTypeValue": {
-      "accessor": function(fieldName) {
-        return function(value) {
-            if (typeof this.values.flt == "undefined") {
-              this.values.flt = new ES.FuzzyLikeThis(this);
-            }
-            return this.values.flt;
+        return function() {
+            if (typeof this.values[fieldName] == "undefined") {
+              this.values[fieldName] = new ES.Filter(this);
+            }            
+            return this.values[fieldName];
         };
       }
     },
   };
-
-  ES.Bool = function(parent, fields) {
-    this.parent = parent;
-    this.values = {};
-    var fields = {
-        'must': {'type': 'queryArray'},
-        'should': {'type': 'queryArray'},
-        'must_not': {'type': 'queryArray'},
-        'minimum_should_match': {'type': 'value'},
-        'boost': {'type': 'value'},
+  
+  function createType(typeInfo) {
+    var FieldType = function(parent) {
+      this.parent = parent;
+      this.values = {};      
+      for(fieldName in typeInfo.fields) {        
+        this[fieldName] = ES.FieldTypes[typeInfo.fields[fieldName].type].accessor(fieldName);
+      }      
+      this.getBody = function() { return Utils.getQueryDSLStruct(this.values); }
+    }    
+    $.extend(FieldType.prototype, baseStuff);    
+    typeInfo.accessor = function(fieldName) {
+          return function() {
+            if (typeof this.values[fieldName] == "undefined") {
+              this.values[fieldName] = new FieldType(this);
+            }
+            return this.values[fieldName];
+          };        
     };
-    for(fieldName in fields) {
-        this[fieldName] = ES.FieldTypes[fields[fieldName].type].accessor(fieldName);
-    }
-    this.getBody = function() { return Utils.getQueryDSLStruct(this.values); }
+    console.log(typeInfo.accessor);
+    return FieldType;
   }
-  $.extend(ES.Bool.prototype, baseStuff);
-
-  ES.Boosting = function(parent) {
-    this.parent = parent;
-    this.values = {};
-    var fields = {
-       'positive': {'type': 'queryArray'},
-       'negative': {'type': 'queryArray'},
-       'boost': {'type': 'value'},
-       'negative_boost': {'type': 'value'},
-    };
-    for(fieldName in fields) {
-       this[fieldName] = ES.FieldTypes[fields[fieldName].type].accessor(fieldName);
+  
+  for(type in ES.FieldTypes) {
+    if (typeof ES.FieldTypes[type].accessor == "string") {      
+      ES.FieldTypes[type].constructor = createType(ES.FieldTypes[type]); //sets the accessor and the constructor for a simple type       
     }
-    this.getBody = function() { return Utils.getQueryDSLStruct(this.values); }
-  }
-  $.extend(ES.Boosting.prototype, baseStuff);
-
-  ES.DisMax = function(parent) {
-    this.parent = parent;
-    this.values = {};
-    var fields = {
-       'queries': {'type': 'queryArray'},
-       'boost': {'type': 'value'},
-       'tie_breaker': {'type': 'value'},
-    };
-    for(fieldName in fields) {
-       this[fieldName] = ES.FieldTypes[fields[fieldName].type].accessor(fieldName);
-    }
-    this.getBody = function() { return Utils.getQueryDSLStruct(this.values); }
-  }
-  $.extend(ES.DisMax.prototype, baseStuff);
-
-  ES.FuzzyLikeThis = function(parent) {
-    this.parent = parent;
-    this.values = {};
-    var fields = {
-       'fields': {'type': 'value'},
-       'like_text': {'type': 'value'},
-       'ignore_tf': {'type': 'value'},
-       'max_query_terms': {'type': 'value'},
-       'fuzziness': {'type': 'value'},
-       'prefix_length': {'type': 'value'},
-       'boost': {'type': 'value'},
-       'analyzer': {'type': 'value'},
-    };
-    for(fieldName in fields) {
-       this[fieldName] = ES.FieldTypes[fields[fieldName].type].accessor(fieldName);
-    }
-    this.getBody = function() { return Utils.getQueryDSLStruct(this.values); }
-  }
-  $.extend(ES.FuzzyLikeThis.prototype, baseStuff);
-
+  }      
+  
   // http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-queries.html
   ES.Query = function(parent, queryOnly) {
     this.parent = parent;
     this.values = {};
     var fields = {
-       'boosting': {'type': 'boostTypeValue'},
-       'bool': {'type': 'boolTypeValue'},
-       'dis_max': {'type': 'dismaxTypeValue'},
-       'flt': {'type': 'fltTypeValue'},
-       'fuzzy_like_this': {'type': 'fltTypeValue'},
-       'fuzzy': {'type': 'fuzzyValue'}
-
+       'boosting': {'type': 'Boosting'},
+       'bool': {'type': 'Bool'},
+       'dis_max': {'type': 'DisMax'},
+       'flt': {'type': 'FuzzyLikeThis'},
+       'fuzzy_like_this': {'type': 'FuzzyLikeThis'},
+       'fuzzy': {'type': 'fuzzyValue'},
+       'geo_shape': {'type': 'geoShapeValue'},
+       'has_child': {'type': 'HasChild'}
     };
     for(fieldName in fields) {
+      console.log(fieldName);
        this[fieldName] = ES.FieldTypes[fields[fieldName].type].accessor(fieldName);
     }
     this.queryOnly = ((typeof queryOnly != "undefined") && queryOnly) ? queryOnly : false;

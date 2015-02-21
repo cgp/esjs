@@ -15,16 +15,16 @@ match query                   |
 multi match query             | 
 bool query                    | Coded
 boosting query                | Coded
-common terms query            |
+common terms query            | Coded
 constant score query          | Mostly Done
-dis max query                 |
+dis max query                 | Coded
 filtered query                | Coded
-fuzzy like this query         | 
-fuzzy like this field query   |
-function score query          |
-fuzzy query                   |
-geoshape query                |
-has child query               |
+fuzzy like this query         | Coded
+fuzzy like this field query   | (not needed)
+function score query          | 
+fuzzy query                   | Coded
+geoshape query                | Coded
+has child query               | Coded
 has parent query              |
 ids query                     |
 indices query                 |
