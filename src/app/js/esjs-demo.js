@@ -60,7 +60,7 @@ define([
    es.nodes().done(appendFunc("#main", "nodes-template"));
 
    es.status().done(function(response) {
-     console.log(response.indices);
+     //console.log(response.indices);
      appendFunc("#indices", "indices-template")(response);
      appendFunc("#main", "status-template")(response);
    });
@@ -83,6 +83,8 @@ define([
                 last: faker.name.lastName(),
                 state: faker.address.stateAbbr(),
                 phrase: faker.hacker.phrase(),
+                birthdate: faker.date.past(40),
+                number: require('faker').random.number(10000),
                 loc: {lo: faker.address.longitude(), la:faker.address.latitude()}
               };
               os.push(o);
@@ -120,8 +122,11 @@ define([
                 .query.bool()
                     .should().prefix({"first":{value:"a"}}).up().up()
                     .should().prefix({"first":{value:"b"}}).up().up()
-                  .up().up()
-              .setSize(100);
+                    .up()
+                  .range("number").lte(1000).up()
+                  //.up().up()
+              //.setSize(100);
+      console.log("--x-", t);
       
       // select * from names where (state = "mi") and (first ~= a*)
                     
@@ -171,13 +176,13 @@ define([
       });
    }
    
-   console.log(es.indices, es.baseURL);
+   //console.log(es.indices, es.baseURL);
    es.indices.exists("names")
 //        .then(deleteIndexIfExists)
 //        .then(createIndex)
 //        .then(createDataInIndex)
 //        .then(waitForDocCount)
-//        .then(performSearch)
+        .then(performSearch)
         .then(performSearchTestBool);
         //.then(performSimpleSearch)                
        

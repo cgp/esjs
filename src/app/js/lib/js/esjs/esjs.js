@@ -66,17 +66,9 @@ define([
   // From https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/keys -- removed unless I hear complaints
 	var ES = {};
   ES.Node = function(parent, getBodyFunc, subqueryFields, subqueryArrayFields) {
-    this.parent = parent;
+    this.up = function() { return parent; }
     this.getBody = getBodyFunc;
   }
-
-  var baseStuff = {
-    "up": function() {
-      return this.parent;
-    }
-  };
-
-  $.extend(ES.Node.prototype, baseStuff);
 
   /**
   Provides the base Widget class...
@@ -101,6 +93,7 @@ define([
       $.extend(ajaxOpts, opts);
       if (!Utils.isUndefinedOrNull(data)) {
         if (typeof data == "object") {
+          //console.log(data);
           data = JSON.stringify(data);
         }
         ajaxOpts.data = data;
@@ -196,7 +189,7 @@ define([
     this.client = client;
   }
 
-  $.extend(ES.Indices.prototype, baseStuff, {
+  $.extend(ES.Indices.prototype, {
     "stats": function(indices, stats) {
       if (Utils.isUndefinedOrNull(indices)) {
         indices = "";
@@ -204,8 +197,8 @@ define([
       if (Utils.isUndefinedOrNull(stats)) {
         stats = "_stats";
       }
-      if (Array.isArray(indices)) {
-        indices = indices.join(",");
+      if (Array.isArray(indices)) {        
+        indices = indices.join(",");        
       }
       if (Array.isArray(stats)) {
         stats = "_stats/" + stats.join(",");
@@ -328,6 +321,7 @@ define([
         delete this.searchUrlVals[field];
         return this;
       }
+      
       this.searchUrlVals[field] = Array.isArray(val) ? val.join(",") : val;
       return this;
     },
@@ -625,6 +619,16 @@ define([
                    'lenient': {'type': 'value'}
                  }
     },
+    "RangeQuery": {'accessor': 'term:RangeQueryOpts'},
+    "RangeQueryOpts": {
+                 'fields': {
+                   'gte': {'type': 'value'},
+                   'gt': {'type': 'value'},
+                   'lte': {'type': 'value'},
+                   'lt': {'type': 'value'},
+                   'boost': {'type': 'value'},
+                 }      
+    },
     "queryArray": {
       "accessor": function(fieldName) {
         return function() {
@@ -718,35 +722,54 @@ define([
 
   function createType(typeInfo) {
     var FieldType = function(parent) {
-      this.parent = parent;
+      this.up = function() { return parent; }
       this.values = {};
-      for(fieldName in typeInfo.fields) {
+      for(fieldName in typeInfo.fields) {        
         this[fieldName] = ES.FieldTypes[typeInfo.fields[fieldName].type].accessor(fieldName);
       }
       this.getBody = function() { return Utils.getQueryDSLStruct(this.values); }
     }
-    $.extend(FieldType.prototype, baseStuff);
-    typeInfo.accessor = function(fieldName) {
-          return function() {
-            if (typeof this.values[fieldName] == "undefined") {
-              this.values[fieldName] = new FieldType(this);
-            }
-            return this.values[fieldName];
-          };
-    };
-    console.log(typeInfo.accessor);
+    
+    if (typeof typeInfo.accessor == "string") {
+      if (typeInfo.accessor.substring(0, 5) == "term:") {
+        var subTypeStr = typeInfo.accessor.substring(5);
+        var subType = ES.FieldTypes[subTypeStr];
+        typeInfo.accessor = function(fieldName) {
+              return function(term) {
+                if (typeof this.values[fieldName] == "undefined") {
+                  this.values[fieldName] = {};
+                  console.log("------", fieldName, term, subType, subTypeStr);
+                  this.values[fieldName][term] = new subType.constructor(FieldType);
+                  console.log(this.values[fieldName][term]);
+                }
+                return this.values[fieldName][term];
+              };
+        };
+      }
+    } else {
+      typeInfo.accessor = function(fieldName) {
+            return function() {
+              
+              if (typeof this.values[fieldName] == "undefined") {
+                this.values[fieldName] = new FieldType(this);
+              }              
+              return this.values[fieldName];
+            };
+      };
+    }    
     return FieldType;
   }
 
   for(type in ES.FieldTypes) {
-    if (typeof ES.FieldTypes[type].accessor == "undefined") {
+    if ((typeof ES.FieldTypes[type].accessor == "undefined") || (typeof ES.FieldTypes[type].accessor == "string")) {
       ES.FieldTypes[type].constructor = createType(ES.FieldTypes[type]); //sets the accessor and the constructor for a simple type
-    }
+    } 
+         
   }
 
   // http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-queries.html
   ES.Query = function(parent, queryOnly) {
-    this.parent = parent;
+    this.up = function() { return parent; }
     this.values = {};
     var fields = {
        'boosting': {'type': 'Boosting'},
@@ -756,17 +779,18 @@ define([
        'fuzzy_like_this': {'type': 'FuzzyLikeThis'},
        'fuzzy': {'type': 'fuzzyValue'},
        'geo_shape': {'type': 'geoShapeValue'},
-       'has_child': {'type': 'HasChild'}
+       'has_child': {'type': 'HasChild'},
+       'range': {'type': 'RangeQuery'}
     };
     for(fieldName in fields) {
-      console.log(fieldName);
+       //console.log(fieldName);
        this[fieldName] = ES.FieldTypes[fields[fieldName].type].accessor(fieldName);
     }
     this.queryOnly = ((typeof queryOnly != "undefined") && queryOnly) ? queryOnly : false;
     this.filter = new ES.Filter(this);
   }
 
-  $.extend(ES.Query.prototype, baseStuff, {
+  $.extend(ES.Query.prototype, {
     "getBody": function() {
       var querySearchBody = {};
       //console.log("--------", this.values);
@@ -857,11 +881,11 @@ define([
 
   // http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-filters.html
   ES.Filter = function(parent) {
-    this.parent = parent;
+    this.up = function() { return parent; }
     this.filter = {};
   }
 
-  $.extend(ES.Filter.prototype, baseStuff, {
+  $.extend(ES.Filter.prototype, {
     "getBody": function() {
       var filterPart = Utils.getQueryDSLStruct(this.filter);
       if (filterPart == null) {
