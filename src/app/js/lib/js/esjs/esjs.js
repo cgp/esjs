@@ -32,7 +32,7 @@ define([
                   }
                   return queryString;
    },
-   "getVal": function(val) {
+   "getVal": function(val, logstuff) {
         if (typeof val == "function") {
           return val();
         }
@@ -43,21 +43,30 @@ define([
           }
           return result;
         }
+        if (val.number) {
+          //console.log('..........', val.getBody(), val.getBody);
+        }
+        //console.log(val);
         if ((typeof val == "object") && (val.getBody)) {
-          return val.getBody();
+          return val.getBody(logstuff);
         }
         return val;
    },
-   "getQueryDSLStruct": function(queryDSLStruct) {
-      // ends up getting used by Search,Query,Filter, so Utils is the most logical location
-      //console.log(queryDSLStruct);
+   "getQueryDSLStruct": function(queryDSLStruct, logstuff) {
+      // ends up getting used by Search,Query,Filter, so Utils is the most logical location            
+      if (typeof logstuff != "undefined") {
+        //console.log("in", queryDSLStruct);
+      }
       var keys = Object.keys(queryDSLStruct);
       if (keys.length == 0) {
         return null;
       }
       var body = {};
-      for(var x=0;x<keys.length;x++) {
-        body[keys] = Utils.getVal(queryDSLStruct[keys[x]]);
+      for(var x=0;x<keys.length;x++) {        
+        body[keys[x]] = Utils.getVal(queryDSLStruct[keys[x]], logstuff);        
+      }
+      if (typeof logstuff != "undefined") {
+        //console.log("result", body, JSON.stringify(body));
       }
       return body;
     }
@@ -235,7 +244,7 @@ define([
       }
       opts.settings.number_of_shards = shardCount;
       opts.settings.number_of_replicas = replicaCount;
-      console.log(this.client);
+      //console.log(this.client);
       return this.client.ajax(indexName+"/", opts, null, ajaxOpts);
     },
 
@@ -312,7 +321,7 @@ define([
     this.sorts = [];
     this.searchUrlVals = {};
     this.aggs = []; // we're going to implement facets this way of course
-    this.query = new ES.Query(this);
+    this.query = new ES.Query(this);    
   }
 
   $.extend(ES.Search.prototype, {
@@ -455,13 +464,13 @@ define([
       }
       return url + "?" + Utils.serialize(this.searchUrlVals);
     },
-    "getBody": function() {
+    "getBody": function(logstuff) {
       var querySearchBody = {};
-      var queryPart = this.query.getBody();
+      var queryPart = this.query.getBody(logstuff);
       if (queryPart != null) {
         querySearchBody.query = queryPart.query; // the root search should only have a query part, the filter portion is delegated to the post_filter, any filters are sub-filters of the query
       }
-      var filterPart = this.post_filter.getBody();
+      var filterPart = this.post_filter.getBody(logstuff);
       if (filterPart != null) {
         querySearchBody.post_filter = filterPart;
       }
@@ -629,6 +638,38 @@ define([
                    'boost': {'type': 'value'},
                  }      
     },
+    "RegExp": {'accessor': 'term:RegExpOpts'},
+    "RegExpOpts": {
+                 'fields': {
+                   'value': {'type': 'value'},
+                   'flags': {'type': 'value'},
+                   'max_determinized_states': {'type': 'value'},                   
+                   'boost': {'type': 'value'}
+                 }      
+    },
+    /*
+    "SpanFirst": {
+                 'fields': {
+                   'match': {'type': 'SpanMatch'},
+                   'end': {'type': 'value'},
+                 }      
+    },
+    "SpanMulti": {
+                 'fields': {
+                   'match': {'type': 'SpanMultiMatch'}                   
+                 }              
+    },
+    "SpanMatch": {
+                 'fields': {
+                   'span_first': {}
+                 }      
+    },
+    "SpanMultiMatch": {
+                 'fields': {
+                   'span_first': {}
+                 }      
+    },
+    */
     "queryArray": {
       "accessor": function(fieldName) {
         return function() {
@@ -644,6 +685,7 @@ define([
     "value": {
       "accessor": function(fieldName) {
         return function(value) {
+          //console.log(this.up(), this.values, value);
             this.values[fieldName] = value;
             return this;
         };
@@ -722,27 +764,30 @@ define([
 
   function createType(typeInfo) {
     var FieldType = function(parent) {
+      //console.trace();
+      //console.log(parent);
       this.up = function() { return parent; }
       this.values = {};
       for(fieldName in typeInfo.fields) {        
         this[fieldName] = ES.FieldTypes[typeInfo.fields[fieldName].type].accessor(fieldName);
       }
-      this.getBody = function() { return Utils.getQueryDSLStruct(this.values); }
+      this.getBody = function(logstuff) { return Utils.getQueryDSLStruct(this.values, logstuff); }
     }
     
     if (typeof typeInfo.accessor == "string") {
       if (typeInfo.accessor.substring(0, 5) == "term:") {
         var subTypeStr = typeInfo.accessor.substring(5);
         var subType = ES.FieldTypes[subTypeStr];
+        
         typeInfo.accessor = function(fieldName) {
               return function(term) {
                 if (typeof this.values[fieldName] == "undefined") {
-                  this.values[fieldName] = {};
-                  console.log("------", fieldName, term, subType, subTypeStr);
-                  this.values[fieldName][term] = new subType.constructor(FieldType);
-                  console.log(this.values[fieldName][term]);
+                  
+                  this.values[fieldName] = new FieldType(this);                  
+                  this.values[fieldName].values[term] = new subType.constructor(this.values[fieldName]);                  
+                  //console.log("------", this.values, this.getBody(true));                  
                 }
-                return this.values[fieldName][term];
+                return this.values[fieldName].values[term];
               };
         };
       }
@@ -763,8 +808,7 @@ define([
   for(type in ES.FieldTypes) {
     if ((typeof ES.FieldTypes[type].accessor == "undefined") || (typeof ES.FieldTypes[type].accessor == "string")) {
       ES.FieldTypes[type].constructor = createType(ES.FieldTypes[type]); //sets the accessor and the constructor for a simple type
-    } 
-         
+    }          
   }
 
   // http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-queries.html
@@ -780,7 +824,9 @@ define([
        'fuzzy': {'type': 'fuzzyValue'},
        'geo_shape': {'type': 'geoShapeValue'},
        'has_child': {'type': 'HasChild'},
-       'range': {'type': 'RangeQuery'}
+       'range': {'type': 'RangeQuery'},
+       'regexp': {'type': 'RegExp'},
+       
     };
     for(fieldName in fields) {
        //console.log(fieldName);
@@ -791,10 +837,10 @@ define([
   }
 
   $.extend(ES.Query.prototype, {
-    "getBody": function() {
+    "getBody": function(logstuff) {
       var querySearchBody = {};
       //console.log("--------", this.values);
-      var queryPart = Utils.getQueryDSLStruct(this.values);
+      var queryPart = Utils.getQueryDSLStruct(this.values, logstuff);
       //console.log(queryPart);
       if (queryPart != null) {
         if (this.queryOnly) {
@@ -802,7 +848,7 @@ define([
         }
         querySearchBody.query = queryPart;
       }
-      var filterPart = this.filter.getBody();
+      var filterPart = this.filter.getBody(logstuff);
       if (filterPart != null) {
         querySearchBody.query.filter = filterPart;
       }

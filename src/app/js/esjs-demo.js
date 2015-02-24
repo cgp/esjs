@@ -119,20 +119,35 @@ define([
       var search = es.createSearch("names", "name");                 
       var t = search
                 .post_filter.term("state", "mi").up().up()
-                .query.bool()
-                    .should().prefix({"first":{value:"a"}}).up().up()
-                    .should().prefix({"first":{value:"b"}}).up().up()
-                    .up()
-                  .range("number").lte(1000).up()
-                  //.up().up()
-              //.setSize(100);
-      console.log("--x-", t);
-      
-      // select * from names where (state = "mi") and (first ~= a*)
-                    
+                .query
+                  .bool()
+                   .should().prefix({"first":{value:"a"}}).up().up()
+                   .should().prefix({"first":{value:"b"}}).up().up()
+                   .must().range("number").lte(1000).up().up().up() 
+                  .up().up(); // query, search
+                  console.log(t);
+                  t.setSize(100);
       //console.log(search.getBody());              
       return search.execute().done(function(response) {
-        console.log(response);
+        //console.log(response);
+      });           
+   }
+   
+   function performSearchTestRegEx() {
+      var search = es.createSearch("names", "name");                 
+      var t = search
+                .post_filter.term("state", "mi").up().up()
+                .query
+                  .bool()
+                   .should().prefix({"first":{value:"a"}}).up().up()
+                   .should().prefix({"first":{value:"b"}}).up().up()
+                   .must().regexp("last").value("barro.*").up().up().up() //important to remember that even in a regex, it's lowercsae
+                  .up().up(); // query, search
+                  console.log(t);
+                  t.setSize(100);
+      //console.log(search.getBody());              
+      return search.execute().done(function(response) {
+        //console.log(response);
       });           
    }
       
@@ -183,7 +198,8 @@ define([
 //        .then(createDataInIndex)
 //        .then(waitForDocCount)
         .then(performSearch)
-        .then(performSearchTestBool);
+        .then(performSearchTestRegEx)
+        //.then(performSearchTestBool)
         //.then(performSimpleSearch)                
        
 });
