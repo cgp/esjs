@@ -490,7 +490,7 @@ define([
     }
   });
 
-  ES.FieldTypes = {
+  ES.FieldTypes = {    
     "Bool": {'fields': {
                 'must': {'type': 'queryArray'},
                 'should': {'type': 'queryArray'},
@@ -791,7 +791,7 @@ define([
     },
   };
 
-  function createType(typeInfo) {
+  function createType(typeInfo, typeName) {
     var FieldType = function(parent) {
       //console.trace();
       //console.log(parent);
@@ -801,6 +801,7 @@ define([
         this[fieldName] = ES.FieldTypes[typeInfo.fields[fieldName].type].accessor(fieldName);
       }
       this.getBody = function(logstuff) { return Utils.getQueryDSLStruct(this.values, logstuff); }
+      this.typeName = typeName;
     }
 
     if (typeof typeInfo.accessor == "string") {
@@ -836,7 +837,7 @@ define([
 
   for(type in ES.FieldTypes) {
     if ((typeof ES.FieldTypes[type].accessor == "undefined") || (typeof ES.FieldTypes[type].accessor == "string")) {
-      ES.FieldTypes[type].constructor = createType(ES.FieldTypes[type]); //sets the accessor and the constructor for a simple type
+      ES.FieldTypes[type].constructor = createType(ES.FieldTypes[type], type); //sets the accessor and the constructor for a simple type
     }
   }
 
@@ -867,7 +868,10 @@ define([
        'range': {'type': 'RangeQuery'},
        'regexp': {'type': 'RegExp'},
        'simple_query_string': {'type': 'SimpleQueryString'},
-
+       'term': {'type': 'Term'},
+       'terms': {'type': 'Terms'},
+       'top_children': {'type': 'TopChildren'},
+       'wildcard': {'type': 'Wildcard'}
     };
     for(fieldName in fields) {
        //console.log(fieldName);
@@ -904,27 +908,16 @@ define([
   // http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-filters.html
   ES.Filter = function(parent) {
     this.up = function() { return parent; }
-    this.filter = {};
-  }
-
-  $.extend(ES.Filter.prototype, {
-    "getBody": function() {
-      var filterPart = Utils.getQueryDSLStruct(this.filter);
-      if (filterPart == null) {
-        return null;
-      } else {
-        return filterPart;
-      }
-    },
-    "term": function(term, values, opts) {
-      this.filter.term = new ES.Node(this, function() {
-          var t = {};
-          t[term] = values;
-          return t;
-      });
-      return this.filter.term;
-    } 
-  })
+    this.values = {};
+    var fields = {
+       'term': {'type': 'Term'},
+    };
+    for(fieldName in fields) {
+       //console.log(fieldName);
+       this[fieldName] = ES.FieldTypes[fields[fieldName].type].accessor(fieldName);
+    }
+    this.getBody = function(logstuff) {return Utils.getQueryDSLStruct(this.values, logstuff)};
+  }  
 
 	window.ES = ES;
 	return ES;

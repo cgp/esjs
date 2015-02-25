@@ -7,8 +7,6 @@ define([
   "bootswatch",
   "bootstrap"
 ], function ($, ES, Handlebars,faker) {
-
-
    var templates = {};
    $("script[type='text/x-handlebars-template']").each(function(idx, el) {
      templates[el.id] = Handlebars.compile($(el).html());
@@ -106,8 +104,8 @@ define([
    
    function performSearch() {
            var search = es.createSearch("names", "name");           
-           search
-             .post_filter.term("state", "mi").up().up()
+           var t = search
+             .post_filter.term("state").value("mi").up().up().up()             
              .query.prefix("first").value("a");
              
      return search.execute().done(function(response) {
@@ -118,7 +116,7 @@ define([
     function performSearchTestBool() {
       var search = es.createSearch("names", "name");                 
       var t = search
-                .post_filter.term("state", "mi").up().up()
+                .post_filter.term("state").value("mi").up().up().up()
                 .query
                   .bool()
                    .should().prefix("first").value("a").up().up().up()
@@ -136,7 +134,7 @@ define([
    function performSearchTestRegEx() {
       var search = es.createSearch("names", "name");                 
       var t = search
-                .post_filter.term("state", "mi").up().up()
+                .post_filter.term("state").value("mi").up().up().up()
                 .query
                   .bool()
                    .should().prefix("first").value("a").up().up().up()
@@ -198,7 +196,7 @@ define([
 //        .then(createDataInIndex)
 //        .then(waitForDocCount)
         .then(performSearch)
-        .then(performSearchTestRegEx)
+        //.then(performSearchTestRegEx)
         .then(performSearchTestBool)
         //.then(performSimpleSearch)                
        
