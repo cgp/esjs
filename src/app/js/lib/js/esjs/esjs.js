@@ -53,7 +53,7 @@ define([
         return val;
    },
    "getQueryDSLStruct": function(queryDSLStruct, logstuff) {
-      // ends up getting used by Search,Query,Filter, so Utils is the most logical location            
+      // ends up getting used by Search,Query,Filter, so Utils is the most logical location
       if (typeof logstuff != "undefined") {
         //console.log("in", queryDSLStruct);
       }
@@ -62,8 +62,8 @@ define([
         return null;
       }
       var body = {};
-      for(var x=0;x<keys.length;x++) {        
-        body[keys[x]] = Utils.getVal(queryDSLStruct[keys[x]], logstuff);        
+      for(var x=0;x<keys.length;x++) {
+        body[keys[x]] = Utils.getVal(queryDSLStruct[keys[x]], logstuff);
       }
       if (typeof logstuff != "undefined") {
         //console.log("result", body, JSON.stringify(body));
@@ -72,12 +72,6 @@ define([
     }
   };
 
-  // From https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/keys -- removed unless I hear complaints
-	var ES = {};
-  ES.Node = function(parent, getBodyFunc, subqueryFields, subqueryArrayFields) {
-    this.up = function() { return parent; }
-    this.getBody = getBodyFunc;
-  }
 
   /**
   Provides the base Widget class...
@@ -122,8 +116,6 @@ define([
     }
     this.indices = new ES.Indices(this);
   }
-
-
 
   /**
 
@@ -206,8 +198,8 @@ define([
       if (Utils.isUndefinedOrNull(stats)) {
         stats = "_stats";
       }
-      if (Array.isArray(indices)) {        
-        indices = indices.join(",");        
+      if (Array.isArray(indices)) {
+        indices = indices.join(",");
       }
       if (Array.isArray(stats)) {
         stats = "_stats/" + stats.join(",");
@@ -321,7 +313,7 @@ define([
     this.sorts = [];
     this.searchUrlVals = {};
     this.aggs = []; // we're going to implement facets this way of course
-    this.query = new ES.Query(this);    
+    this.query = new ES.Query(this);
   }
 
   $.extend(ES.Search.prototype, {
@@ -330,7 +322,7 @@ define([
         delete this.searchUrlVals[field];
         return this;
       }
-      
+
       this.searchUrlVals[field] = Array.isArray(val) ? val.join(",") : val;
       return this;
     },
@@ -508,12 +500,30 @@ define([
                    'boost': {'type': 'value'},
                    'negative_boost': {'type': 'value'},
                  }
-     },
+    },
+    "CommonValue": {'accessor': 'term:CommonValueOpts'},
+    "CommonValueOpts": {
+                 'fields': {
+                   'query': {'type': "value"},
+                   'cutoff_frequency': {'type': "value"},
+                   'low_freq_operator': {'type': "value"},
+                   'minimum_should_match': {'type': "value"}
+                 }
+    },
     "DisMax": {'fields': {
                  'queries': {'type': 'queryArray'},
                  'boost': {'type': 'value'},
                  'tie_breaker': {'type': 'value'},
                 },
+    },
+    "Fuzzy": {'accessor': 'term:FuzzyOpts'},
+    "FuzzyOpts": {'fields': {
+                         'value': {'type': 'value'},
+                         'boost': {'type': 'value'},
+                         'fuzziness': {'type': 'value'},
+                         'prefix_length': {'type': 'value'},
+                         'max_expansions': {'type': 'value'}
+                     },
     },
     "FuzzyLikeThis": {'fields': {
                          'fields': {'type': 'value'},
@@ -525,6 +535,13 @@ define([
                          'boost': {'type': 'value'},
                          'analyzer': {'type': 'value'}
                      },
+    },
+    "GeoShape": {'accessor': 'term:GeoShapeOpts'},
+    "GeoShapeOpts": {// http://www.elasticsearch.org/guide/en/elasticsearch/reference/master/mapping-geo-shape-type.html
+                 'fields': {
+                   'shape': {'type': 'value'}, // {"coordinates": coordinates, "type": shapeType}
+                   'indexed_shape': {'type': 'value'}, // { "id": id, "type": type, "index": index, "path": path }
+                 }
     },
     "HasChild": {'fields': {
                    'query': {'type': 'queryTypeValue'},
@@ -592,6 +609,14 @@ define([
                    'score_mode': {'type': 'value'}
                  }
     },
+    "Prefix": {'accessor': 'term:PrefixOpts'},
+    "PrefixOpts": {
+                 'fields': {
+                   'value': {'type': 'value'},
+                   'prefix': {'type': 'value'},
+                   'boost': {'type': 'value'}
+                 }
+    },
     "QueryString": {
                  'fields': {
                    'query': {'type': 'value'},
@@ -636,40 +661,46 @@ define([
                    'lte': {'type': 'value'},
                    'lt': {'type': 'value'},
                    'boost': {'type': 'value'},
-                 }      
+                 }
     },
     "RegExp": {'accessor': 'term:RegExpOpts'},
     "RegExpOpts": {
                  'fields': {
                    'value': {'type': 'value'},
                    'flags': {'type': 'value'},
-                   'max_determinized_states': {'type': 'value'},                   
+                   'max_determinized_states': {'type': 'value'},
                    'boost': {'type': 'value'}
-                 }      
-    },
-    /*
+                 }
+    }, // http://stackoverflow.com/questions/20748647/boosting-field-prefix-match-in-elasticsearch
     "SpanFirst": {
                  'fields': {
-                   'match': {'type': 'SpanMatch'},
+                   'match': {'type': 'SpanFirstMatch'},
                    'end': {'type': 'value'},
-                 }      
+                 }
+    },
+    "SpanFirstMatch": {
+                 'fields': {
+                   'span_multi': {'type': 'SpanMulti'},
+                   'span_near': {'type': 'SpanNear'},
+                   'span_not': {'type': 'SpanNot'},
+                   'span_or': {'type': 'SpanOr'},
+                   'span_term': {'type': 'SpanTerm'},
+                 }
     },
     "SpanMulti": {
                  'fields': {
-                   'match': {'type': 'SpanMultiMatch'}                   
-                 }              
-    },
-    "SpanMatch": {
-                 'fields': {
-                   'span_first': {}
-                 }      
+                   'match': {'type': 'SpanMultiMatch'},
+                 }
     },
     "SpanMultiMatch": {
                  'fields': {
-                   'span_first': {}
-                 }      
+                   'wildcard': {'type': "Wildcard"},
+                   'fuzzy': {'type': "Fuzzy"},
+                   'prefix': {'type': "Prefix"},
+                   'term': {'type': "Term"},
+                   'range': {'type': "Range"},
+                 }
     },
-    */
     "queryArray": {
       "accessor": function(fieldName) {
         return function() {
@@ -691,60 +722,21 @@ define([
         };
       }
     },
-    "commonValue": {
-      "accessor": function(fieldName) {
-        return function(term, query, cutoff_frequency, low_freq_operator,  minimum_should_match) {
-            this.values[fieldName][term] = {};
-            this.values[fieldName][term].query = query;
-            this.values[fieldName][term].cutoff_frequency = cutoff_frequency;
-            if (!Utils.isUndefinedOrNull(low_freq_operator)) {
-              this.values[fieldName][term].low_freq_operator = low_freq_operator;
-            }
-            if (!Utils.isUndefinedOrNull(minimum_should_match)) {
-              this.values[fieldName][term].low_freq_operator = minimum_should_match;
-            }
-            return this;
-        };
-      }
-    },
-    "fuzzyValue": {
-      "accessor": function(fieldName) {
-        return function(term, value, boost, fuzziness,  prefix_length, max_expansions) {
-            this.values[fieldName][term] = {};
-            this.values[fieldName][term].value = value;
-            if (!Utils.isUndefinedOrNull(boost)) { this.values[fieldName][term].boost = boost; }
-            if (!Utils.isUndefinedOrNull(fuzziness)) { this.values[fieldName][term].fuzziness = fuzziness; }
-            if (!Utils.isUndefinedOrNull(prefix_length)) { this.values[fieldName][term].prefix_length = prefix_length; }
-            if (!Utils.isUndefinedOrNull(max_expansions)) { this.values[fieldName][term].max_expansions = max_expansions; }
-            return this;
-        };
-      }
-    },
-    "geoShapeValue": { //// http://www.elasticsearch.org/guide/en/elasticsearch/reference/master/mapping-geo-shape-type.html
-      "accessor": function(fieldName) {
-        return function(term, shapeType, coordinates_or_id, type, index, path) {
-            this.values[fieldName][term] = {};
-            if (shapeType == "indexed_shape") {
-              this.values[fieldName][term].shape = {};
-              this.values[fieldName][term].shape.coordinates = coordinates_or_id;
-              this.values[fieldName][term].shape.type = shapeType;
-            } else {
-              this.values[fieldName][term].indexed_shape = {
-                        "id": coordinates_or_id,
-                        "type": type,
-                        "index": index,
-                        "path": path
-              };
-            }
-            return this;
-        };
-      }
-    },
     "queryTypeValue": {
       "accessor": function(fieldName) {
         return function() {
             if (typeof this.values[fieldName] == "undefined") {
               this.values[fieldName] = new ES.Query(this, true);
+            }
+            return this.values[fieldName];
+        };
+      }
+    },
+    "QueryTypeValueVisible": {
+      "accessor": function(fieldName) {
+        return function() {
+            if (typeof this.values[fieldName] == "undefined") {
+              this.values[fieldName] = new ES.Query(this);
             }
             return this.values[fieldName];
         };
@@ -768,24 +760,24 @@ define([
       //console.log(parent);
       this.up = function() { return parent; }
       this.values = {};
-      for(fieldName in typeInfo.fields) {        
+      for(fieldName in typeInfo.fields) {
         this[fieldName] = ES.FieldTypes[typeInfo.fields[fieldName].type].accessor(fieldName);
       }
       this.getBody = function(logstuff) { return Utils.getQueryDSLStruct(this.values, logstuff); }
     }
-    
+
     if (typeof typeInfo.accessor == "string") {
       if (typeInfo.accessor.substring(0, 5) == "term:") {
         var subTypeStr = typeInfo.accessor.substring(5);
         var subType = ES.FieldTypes[subTypeStr];
-        
+
         typeInfo.accessor = function(fieldName) {
               return function(term) {
                 if (typeof this.values[fieldName] == "undefined") {
-                  
-                  this.values[fieldName] = new FieldType(this);                  
-                  this.values[fieldName].values[term] = new subType.constructor(this.values[fieldName]);                  
-                  //console.log("------", this.values, this.getBody(true));                  
+
+                  this.values[fieldName] = new FieldType(this);
+                  this.values[fieldName].values[term] = new subType.constructor(this.values[fieldName]);
+                  //console.log("------", this.values, this.getBody(true));
                 }
                 return this.values[fieldName].values[term];
               };
@@ -794,21 +786,21 @@ define([
     } else {
       typeInfo.accessor = function(fieldName) {
             return function() {
-              
+
               if (typeof this.values[fieldName] == "undefined") {
                 this.values[fieldName] = new FieldType(this);
-              }              
+              }
               return this.values[fieldName];
             };
       };
-    }    
+    }
     return FieldType;
   }
 
   for(type in ES.FieldTypes) {
     if ((typeof ES.FieldTypes[type].accessor == "undefined") || (typeof ES.FieldTypes[type].accessor == "string")) {
       ES.FieldTypes[type].constructor = createType(ES.FieldTypes[type]); //sets the accessor and the constructor for a simple type
-    }          
+    }
   }
 
   // http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-queries.html
@@ -818,15 +810,26 @@ define([
     var fields = {
        'boosting': {'type': 'Boosting'},
        'bool': {'type': 'Bool'},
+       'common': {'type': 'CommonValue'},
+       'constant_score': {'type': 'QueryTypeValueVisible'},
        'dis_max': {'type': 'DisMax'},
+       'filtered': {'type': 'QueryTypeValueVisible'},
        'flt': {'type': 'FuzzyLikeThis'},
+       'fuzzy': {'type': 'Fuzzy'},
        'fuzzy_like_this': {'type': 'FuzzyLikeThis'},
-       'fuzzy': {'type': 'fuzzyValue'},
-       'geo_shape': {'type': 'geoShapeValue'},
+       'geo_shape': {'type': "GeoShape"},
        'has_child': {'type': 'HasChild'},
+       'has_parent': {'type': 'HasParent'},
+       'ids': {'type': 'Ids'},
+       'indices': {'type': 'Indices'},
+       'match_all': {'type': 'MatchAll'},
+       'more_like_this': {'type': 'MoreLikeThis'},
+       'nested': {'type': 'Nested'},
+       'query_string': {'type': 'QueryString'},
        'range': {'type': 'RangeQuery'},
        'regexp': {'type': 'RegExp'},
-       
+       'simple_query_string': {'type': 'SimpleQueryString'},
+
     };
     for(fieldName in fields) {
        //console.log(fieldName);
@@ -857,72 +860,7 @@ define([
       } else {
         return null;
       }
-    },
-
-     /**
-      A query that wraps a filter or another query and simply returns a constant score equal to the query boost for every document in the filter.
-
-      http://www.elasticsearch.org/guide/en/elasticsearch/reference/master/query-dsl-constant-score-query.html
-
-      @method prefix
-      @param {Object} fieldPrefixAndBoostPairs
-      @param {float} commonBoost - boost all prefix terms by a given amount (can be overridden by each pair)
-      @param {String} rewrite http://www.elasticsearch.org/guide/en/elasticsearch/reference/master/query-dsl-multi-term-rewrite.html
-      @return {boolean} response The response from the server. (true if successful)
-    */
-    "constant_score": function(score) {
-      var subQuery = new ES.Query(this.parent);
-      this.values.constant_score = function() {
-        var queryPart = this.subQuery.getBody();
-        queryPart = queryPart == null ? {} : queryPart;
-        var scorePart = Utils.isUndefinedOrNull(score) ? {} : {boost: score};
-        return $.extend({}, queryPart, scorePart);
-      }
-      return subQuery;
-    },
-    "filtered": function() {
-      if (!this.values.filtered) {
-        var subQuery = new ES.Query(this.parent);
-        this.values.filtered = new ES.Node(this, subQuery.getBody);
-      }
-      return this.values.filtered.subQuery;
-      return subQuery;
-    },
-    /**
-      Matches documents that have fields containing terms with a specified prefix (not analyzed). The prefix query maps to Lucene PrefixQuery.
-
-      http://www.elasticsearch.org/guide/en/elasticsearch/reference/master/query-dsl-prefix-query.html
-
-      @method prefix Matches documents that have fields containing terms with a specified prefix (not analyzed).
-      @param {Object} fieldValueBoostPairs Object that adheres to the following format
-                 {"<term_name>": {"value": "<prefix_to_match>", "boost": "<boost_val>"}}
-                 only one prefix to match per term, otherwise use a should
-                 https://gist.github.com/jprante/bdf9a9755a64bc23afbe
-      @param {float} commonBoost - boost all prefix terms by a given amount (can be overridden by each pair)
-      @param {String} rewrite http://www.elasticsearch.org/guide/en/elasticsearch/reference/master/query-dsl-multi-term-rewrite.html
-      @return {boolean} response The response from the server. (true if successful)
-    */
-    "prefix": function(fieldValueBoostPairs, commonBoost, rewrite) {
-      if (typeof this.values.prefix == "undefined") {
-        this.values.prefix = new ES.Node(this, function() {
-          var keys = Object.keys(fieldValueBoostPairs);
-          var prefixCfg = {};
-          for(var x=0;x<keys.length;x++) {
-            prefixCfg[keys[x]] = {"value": fieldValueBoostPairs[keys[x]].value};
-            if (typeof fieldValueBoostPairs[keys[x]].boost != "undefined") {
-              prefixCfg[keys[x]].boost = fieldValueBoostPairs[keys[x]].boost;
-            } else if (!Utils.isUndefinedOrNull(commonBoost)) {
-              prefixCfg[keys[x]].boost = commonBoost;
-            }
-          }
-          if (!Utils.isUndefinedOrNull(rewrite)) {
-            prefixCfg.rewrite = rewrite;
-          }
-          return prefixCfg;
-        });
-      };
-      return this.values.prefix;
-    },
+    }
   });
 
   // http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-filters.html
@@ -940,14 +878,7 @@ define([
         return filterPart;
       }
     },
-    "term": function(term, values, opts) {
-      this.filter.term = new ES.Node(this, function() {
-          var t = {};
-          t[term] = values;
-          return t;
-      });
-      return this.filter.term;
-    }
+    
   })
 
 	window.ES = ES;

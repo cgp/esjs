@@ -35,8 +35,8 @@ nested query                  | Coded
 prefix query                  | Done
 query string query            | Coded
 simple query string query     | Coded
-range query                   |
-regexp query                  |
+range query                   | Coded
+regexp query                  | Coded
 span first query              |
 span multi term query         |
 span near query               |

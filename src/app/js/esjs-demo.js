@@ -129,7 +129,7 @@ define([
                   t.setSize(100);
       //console.log(search.getBody());              
       return search.execute().done(function(response) {
-        //console.log(response);
+        console.log("bool", response);
       });           
    }
    
@@ -147,7 +147,7 @@ define([
                   t.setSize(100);
       //console.log(search.getBody());              
       return search.execute().done(function(response) {
-        //console.log(response);
+        console.log(response);
       });           
    }
       
@@ -199,7 +199,7 @@ define([
 //        .then(waitForDocCount)
         .then(performSearch)
         .then(performSearchTestRegEx)
-        //.then(performSearchTestBool)
+        .then(performSearchTestBool)
         //.then(performSimpleSearch)                
        
 });
