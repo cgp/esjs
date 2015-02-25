@@ -43,10 +43,10 @@ span near query               |
 span not query                |
 span or query                 |
 span term query               |
-term query                    |
-terms query                   |
-top children query            |
-wildcard query                |
+term query                    | Coded
+terms query                   | Coded
+top children query            | Coded
+wildcard query                | Coded
 minimum should match          |
 multi term query rewrite      |
 template query                |

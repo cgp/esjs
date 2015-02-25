@@ -72,7 +72,12 @@ define([
     }
   };
 
-
+  var ES = {};
+  ES.Node = function(parent, getBodyFunc, subqueryFields, subqueryArrayFields) {
+    this.up = function() { return parent; }
+    this.getBody = getBodyFunc;
+  }
+  
   /**
   Provides the base Widget class...
 
@@ -694,13 +699,45 @@ define([
     },
     "SpanMultiMatch": {
                  'fields': {
-                   'wildcard': {'type': "Wildcard"},
                    'fuzzy': {'type': "Fuzzy"},
-                   'prefix': {'type': "Prefix"},
-                   'term': {'type': "Term"},
+                   'prefix': {'type': "Prefix"},                   
                    'range': {'type': "Range"},
+                   'term': {'type': "Term"},
+                   'wildcard': {'type': "Wildcard"},
                  }
     },
+    "Term": {'accessor': 'term:TermOpts'},
+    "TermOpts": {
+                 'fields': {
+                   'value': {'type': 'value'},
+                   'prefix': {'type': 'value'},
+                   'boost': {'type': 'value'}
+                 }
+    },    
+    "Terms": {
+                 'fields': {
+                   'tags': {'type': 'value'},                   
+                   'minimum_should_match': {'type': 'value'}
+                 }
+    },
+    "TopChildren": {
+                 'fields': {
+                   'type': {'type': 'value'},                   
+                   'query': {'type': 'queryTypeValue'},
+                   'score': {'type': 'value'},
+                   'factor': {'type': 'value'},
+                   'incremental_factor': {'type': 'value'}
+                 }
+    },
+    "Wildcard": {'accessor': 'term:WildcardOpts'},
+    "WildcardOpts": {
+                 'fields': {
+                   'value': {'type': 'value'},
+                   'wildcard': {'type': 'value'},
+                   'boost': {'type': 'value'}
+                 }
+    },       
+    
     "queryArray": {
       "accessor": function(fieldName) {
         return function() {
@@ -825,6 +862,7 @@ define([
        'match_all': {'type': 'MatchAll'},
        'more_like_this': {'type': 'MoreLikeThis'},
        'nested': {'type': 'Nested'},
+       'prefix': {'type': 'Prefix'},
        'query_string': {'type': 'QueryString'},
        'range': {'type': 'RangeQuery'},
        'regexp': {'type': 'RegExp'},
@@ -878,7 +916,14 @@ define([
         return filterPart;
       }
     },
-    
+    "term": function(term, values, opts) {
+      this.filter.term = new ES.Node(this, function() {
+          var t = {};
+          t[term] = values;
+          return t;
+      });
+      return this.filter.term;
+    } 
   })
 
 	window.ES = ES;

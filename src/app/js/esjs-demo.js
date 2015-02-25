@@ -108,7 +108,7 @@ define([
            var search = es.createSearch("names", "name");           
            search
              .post_filter.term("state", "mi").up().up()
-             .query.prefix({"first":{value:"a"}});
+             .query.prefix("first").value("a");
              
      return search.execute().done(function(response) {
              console.log(response);
@@ -121,8 +121,8 @@ define([
                 .post_filter.term("state", "mi").up().up()
                 .query
                   .bool()
-                   .should().prefix({"first":{value:"a"}}).up().up()
-                   .should().prefix({"first":{value:"b"}}).up().up()
+                   .should().prefix("first").value("a").up().up().up()
+                   .should().prefix("first").value("b").up().up().up()
                    .must().range("number").lte(1000).up().up().up() 
                   .up().up(); // query, search
                   console.log(t);
@@ -139,8 +139,8 @@ define([
                 .post_filter.term("state", "mi").up().up()
                 .query
                   .bool()
-                   .should().prefix({"first":{value:"a"}}).up().up()
-                   .should().prefix({"first":{value:"b"}}).up().up()
+                   .should().prefix("first").value("a").up().up().up()
+                   .should().prefix("first").value("b").up().up().up()
                    .must().regexp("last").value("barro.*").up().up().up() //important to remember that even in a regex, it's lowercsae
                   .up().up(); // query, search
                   console.log(t);
