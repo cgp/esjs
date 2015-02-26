@@ -32,7 +32,7 @@ match all query               | Coded
 more like this query          | Coded
 more like this field query    | *deprecated, so not coded*
 nested query                  | Coded
-prefix query                  | Done
+prefix query                  | Coded
 query string query            | Coded
 simple query string query     | Coded
 range query                   | Coded
@@ -54,11 +54,11 @@ template query                |
 
 Filter Type                   | Status
 ------------------------------|----------
-and filter                    |
-bool filter                   |
-exists filter                 |
-geo bounding box filter       |
-geo distance filter           |
+and filter                    | Coded
+bool filter                   | Coded
+exists filter                 | Coded
+geo bounding box filter       | Coded
+geo distance filter           | Coded
 geo distance range filter     |
 geo polygon filter            |
 geoshape filter               |
@@ -81,3 +81,7 @@ script filter                 |
 term filter                   |
 terms filter                  |
 type filter                   |
+
+Indices Support               | Status
+------------------------------|----------
+Mappings                      | Coded and Tested

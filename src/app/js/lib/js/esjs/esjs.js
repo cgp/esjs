@@ -757,8 +757,8 @@ define([
              }
     },    
     "GeoDistanceFilter": {
-                    'accessor': 'term:<none>',
-                    'fields': {
+                'accessor': 'term:<none>',
+                'fields': {
                 'distance': {'type': 'value'},
                 'distance_type': {'type': 'value'},
                 'optimize_bbox': {'type': 'value'},
