@@ -67,8 +67,27 @@ define([
 
    var logging = logFunc(".console", "status-template");
 
+   function deleteIndexIfExists(val) {     
+     if (val) {       
+       return es.indices.remove("names");           
+     } else {       
+       return null; // I think this is ok.
+     }
+   }
+   
    function createIndex() {    
      return es.indices.create("names");
+   }
+   
+   function setupMappings() {
+      var mappings = new ES.Mapping();      
+        
+      var t = mappings.mapping('name')
+              .properties("first").type("string").up().up()
+              console.log(t);
+              t.properties("loc").type("geo_point");
+      es.ajax("names/_mapping/name", mappings.getBody(), null, {type: "PUT"})
+      console.log(mappings.getBody());     
    }
    
    function createDataInIndex() {
@@ -83,7 +102,7 @@ define([
                 phrase: faker.hacker.phrase(),
                 birthdate: faker.date.past(40),
                 number: require('faker').random.number(10000),
-                loc: {lo: faker.address.longitude(), la:faker.address.latitude()}
+                loc: {lon: faker.address.longitude(), lat:faker.address.latitude()}
               };
               os.push(o);
             }
@@ -93,62 +112,7 @@ define([
           }          
      return $.when.apply($, promises);
    }
-   
-   function deleteIndexIfExists(val) {     
-     if (val) {       
-       return es.indices.remove("names");           
-     } else {       
-       return null; // I think this is ok.
-     }
-   }
-   
-   function performSearch() {
-           var search = es.createSearch("names", "name");           
-           var t = search
-             .post_filter.term("state").value("mi").up().up().up()             
-             .query.prefix("first").value("a");
-             
-     return search.execute().done(function(response) {
-             console.log(response);
-     });           
-   }
-   
-    function performSearchTestBool() {
-      var search = es.createSearch("names", "name");                 
-      var t = search
-                .post_filter.term("state").value("mi").up().up().up()
-                .query
-                  .bool()
-                   .should().prefix("first").value("a").up().up().up()
-                   .should().prefix("first").value("b").up().up().up()
-                   .must().range("number").lte(1000).up().up().up() 
-                  .up().up(); // query, search
-                  console.log(t);
-                  t.setSize(100);
-      //console.log(search.getBody());              
-      return search.execute().done(function(response) {
-        console.log("bool", response);
-      });           
-   }
-   
-   function performSearchTestRegEx() {
-      var search = es.createSearch("names", "name");                 
-      var t = search
-                .post_filter.term("state").value("mi").up().up().up()
-                .query
-                  .bool()
-                   .should().prefix("first").value("a").up().up().up()
-                   .should().prefix("first").value("b").up().up().up()
-                   .must().regexp("last").value("barro.*").up().up().up() //important to remember that even in a regex, it's lowercsae
-                  .up().up(); // query, search
-                  console.log(t);
-                  t.setSize(100);
-      //console.log(search.getBody());              
-      return search.execute().done(function(response) {
-        console.log(response);
-      });           
-   }
-      
+     
    function checkDocCount(dfd, timeToWait) {
      setTimeout(function() {
        console.log('check');
@@ -172,6 +136,67 @@ define([
      return dfd.promise();
    }
    
+   function performSearch() {
+           var search = es.createSearch("names", "name");           
+           var t = search
+             .post_filter.term("state").value("mi").up().up().up()             
+             .query.prefix("first").value("a");
+             
+     return search.execute().done(function(response) {
+             console.log("performSearch()", response);
+     });           
+   }
+   
+    function performSearchTestBool() {
+      var search = es.createSearch("names", "name");                 
+      var t = search
+                .post_filter.term("state").value("mi").up().up().up()
+                .query
+                  .bool()
+                   .should().prefix("first").value("a").up().up().up()
+                   .should().prefix("first").value("b").up().up().up()
+                   .must().range("number").lte(1000).up().up().up() 
+                  .up().up(); // query, search
+                  
+                  t.setSize(100);
+      //console.log(search.getBody());              
+      return search.execute().done(function(response) {
+        console.log("performSearchTestBool()", response);
+      });           
+   }
+   
+   function performSearchTestRegEx() {
+      var search = es.createSearch("names", "name");                 
+      var t = search
+                .post_filter.term("state").value("mi").up().up().up()
+                .query
+                  .bool()
+                   .should().prefix("first").value("a").up().up().up()
+                   .should().prefix("first").value("b").up().up().up()
+                   .must().regexp("last").value("barro.*").up().up().up() //important to remember that even in a regex, it's lowercsae
+                  .up().up(); // query, search
+                  
+                  t.setSize(100);
+      //console.log(search.getBody());              
+      return search.execute().done(function(response) {
+        console.log("performSearchTestRegEx()", response);
+      });           
+   }
+   
+   function performSearchTestGeoDistance() {
+      var search = es.createSearch("names", "name");                 
+      var t = search
+                .post_filter.geo_distance("loc", {"lat": 42.4811399, "loc": -83.494441}).distance("300mi").up().up()                
+                //console.log("...",t, t.up(), t.up().up());
+                t.setSize(100);                  
+      console.log(search.getBody());              
+      
+      return search.execute().done(function(response) {
+        console.log("performSearchGeoDistance()", response);
+      });           
+      
+   }
+   
    function performSimpleSearch() {
       var search = es.createSearch();         
       search.setSize(25)
@@ -184,20 +209,27 @@ define([
                .addSort("sortedField", "asc")
                .setAnalyzeWildcard(true);      
       return search.simpleQueryStringSearch("state:mi").done(function(response) {
-        console.log(search.getSearchURL(true));
+        //console.log(search.getSearchURL(true));
         console.log(response.hits);
       });
    }
    
    //console.log(es.indices, es.baseURL);
+   
    es.indices.exists("names")
-//        .then(deleteIndexIfExists)
-//        .then(createIndex)
-//        .then(createDataInIndex)
-//        .then(waitForDocCount)
-        .then(performSearch)
+        .then(deleteIndexIfExists)
+        .then(createIndex)
+        .then(setupMappings)
+        //.then(createDataInIndex)        
+        //.then(waitForDocCount)
+        //.then(performSearch)
         //.then(performSearchTestRegEx)
-        .then(performSearchTestBool)
-        //.then(performSimpleSearch)                
-       
+        //.then(performSearchTestBool)
+        //.then(performSearchTestGeoDistance)
+        //.then(performSimpleSearch)
+   
+   
+   
+   
+   
 });

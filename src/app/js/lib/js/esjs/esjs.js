@@ -43,10 +43,6 @@ define([
           }
           return result;
         }
-        if (val.number) {
-          //console.log('..........', val.getBody(), val.getBody);
-        }
-        //console.log(val);
         if ((typeof val == "object") && (val.getBody)) {
           return val.getBody(logstuff);
         }
@@ -54,6 +50,7 @@ define([
    },
    "getQueryDSLStruct": function(queryDSLStruct, logstuff) {
       // ends up getting used by Search,Query,Filter, so Utils is the most logical location
+      //console.log(queryDSLStruct, typeof queryDSLStruct);
       if (typeof logstuff != "undefined") {
         //console.log("in", queryDSLStruct);
       }
@@ -490,7 +487,7 @@ define([
     }
   });
 
-  ES.FieldTypes = {    
+  ES.FieldTypes = {
     "Bool": {'fields': {
                 'must': {'type': 'queryArray'},
                 'should': {'type': 'queryArray'},
@@ -735,9 +732,56 @@ define([
                    'value': {'type': 'value'},
                    'wildcard': {'type': 'value'},
                    'boost': {'type': 'value'}
-                 }
+                 }    
     },       
-    
+    "AndFilter": {'fields': {
+                'filters': {'type': 'filterArray'},
+                '_cache': {'type': 'value'}
+             }
+    },
+    "BoolFilter": {'fields': {
+                'must': {'type': 'filterArray'},
+                'should': {'type': 'filterArray'},
+                'must_not': {'type': 'filterArray'},
+                'minimum_should_match': {'type': 'value'},
+                'boost': {'type': 'value'},
+             }             
+    },
+    "ExistsFilter": {'fields': {
+                'field': {'type': 'value'}
+             }             
+    },
+    "GeoBoundingBoxFilter": {'fields': {
+                'type': {'type': 'value'},
+                '_cache': {'field': 'value'}
+             }
+    },    
+    "GeoDistanceFilter": {
+                    'accessor': 'term:<none>',
+                    'fields': {
+                'distance': {'type': 'value'},
+                'distance_type': {'type': 'value'},
+                'optimize_bbox': {'type': 'value'},
+                '_cache': {'type': 'value'}
+             }
+    },
+    "Mapping": {'accessor': 'term:MappingOpts'},
+    "MappingOpts": {
+           'fields': {
+                'properties': {'type': 'FieldDefinitions'}
+           }
+    },
+    "FieldDefinitions": {'accessor': 'term:FieldDefinitionOpts'},
+    "FieldDefinitionOpts": {
+           'fields': { // type -- string, integer/long, float/double, boolean, and null, (also object/nested/attachment)
+                'type': {'type': 'value'},
+                'dynamic': {'type': 'value'},
+                'enabled': {'type': 'value'},
+                'include_in_all': {'type': 'value'},
+                'properties': {'type': 'FieldDefinitions'}
+             }
+    },
+        
     "queryArray": {
       "accessor": function(fieldName) {
         return function() {
@@ -779,6 +823,18 @@ define([
         };
       }
     },
+    "filterArray": {
+       "accessor": function(fieldName) {
+        return function() {
+            if (typeof this.values[fieldName] == "undefined") {
+              this.values[fieldName] = [];
+            }
+            var q = new ES.Filter(this);
+            this.values[fieldName].push(q);
+            return q;
+        };
+      }
+    },
     "filterTypeValue": {
       "accessor": function(fieldName) {
         return function() {
@@ -788,7 +844,7 @@ define([
             return this.values[fieldName];
         };
       }
-    },
+    },    
   };
 
   function createType(typeInfo, typeName) {
@@ -798,6 +854,7 @@ define([
       this.up = function() { return parent; }
       this.values = {};
       for(fieldName in typeInfo.fields) {
+        //console.log(typeName, fieldName);
         this[fieldName] = ES.FieldTypes[typeInfo.fields[fieldName].type].accessor(fieldName);
       }
       this.getBody = function(logstuff) { return Utils.getQueryDSLStruct(this.values, logstuff); }
@@ -808,26 +865,39 @@ define([
       if (typeInfo.accessor.substring(0, 5) == "term:") {
         var subTypeStr = typeInfo.accessor.substring(5);
         var subType = ES.FieldTypes[subTypeStr];
-
+        
         typeInfo.accessor = function(fieldName) {
-              return function(term) {
+              return function(term, value) {
                 if (typeof this.values[fieldName] == "undefined") {
-
-                  this.values[fieldName] = new FieldType(this);
-                  this.values[fieldName].values[term] = new subType.constructor(this.values[fieldName]);
-                  //console.log("------", this.values, this.getBody(true));
+                  this.values[fieldName] = new FieldType(this);                  
                 }
-                return this.values[fieldName].values[term];
+                if (typeof this.values[fieldName].values[term] == "undefined") {
+                  if (subTypeStr === "<none>") {                    
+                     this.values[fieldName].values[term] = {}; // just an obj
+                  } else {                    
+                     this.values[fieldName].values[term] = new subType.constructor(this.values[fieldName]);
+                  }                
+                }
+                if (typeof value != 'undefined') {
+                  this.values[fieldName].values[term] = value;
+                }
+                if (subTypeStr === "<none>") {
+                  return this.values[fieldName];
+                } else {
+                  return this.values[fieldName].values[term];
+                }
               };
         };
       }
     } else {
       typeInfo.accessor = function(fieldName) {
-            return function() {
-
+            return function(value) {
               if (typeof this.values[fieldName] == "undefined") {
                 this.values[fieldName] = new FieldType(this);
-              }
+              } 
+              if (typeof value != 'undefined') {
+                  this.values[fieldName].values = value;
+              }              
               return this.values[fieldName];
             };
       };
@@ -910,13 +980,31 @@ define([
     this.up = function() { return parent; }
     this.values = {};
     var fields = {
+       'and': {'type': 'AndFilter'},
+       'bool': {'type': 'BoolFilter'},
+       'exists': {'type': 'ExistsFilter'},
        'term': {'type': 'Term'},
+       'geo_bounding_box': {'type': "GeoBoundingBoxFilter"},
+       'geo_distance': {'type': "GeoDistanceFilter"},
     };
     for(fieldName in fields) {
        //console.log(fieldName);
        this[fieldName] = ES.FieldTypes[fields[fieldName].type].accessor(fieldName);
     }
     this.getBody = function(logstuff) {return Utils.getQueryDSLStruct(this.values, logstuff)};
+  }  
+  
+  ES.Mapping = function() {
+    var that = this;
+    this.up = function() { return that }
+    this.values = {};
+    var fields = {
+       'mapping': {'type': 'Mapping'},
+    };
+    for(fieldName in fields) {       
+       this[fieldName] = ES.FieldTypes[fields[fieldName].type].accessor(fieldName);
+    }
+    this.getBody = function(logstuff) {return this.values['mapping'].getBody()};
   }  
 
 	window.ES = ES;
