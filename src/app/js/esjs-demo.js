@@ -173,7 +173,7 @@ define([
                   .bool()
                    .should().prefix("first").value("a").up().up().up()
                    .should().prefix("first").value("b").up().up().up()
-                   .must().regexp("last").value("barro.*").up().up().up() //important to remember that even in a regex, it's lowercsae
+                   .must().regexp("last").value("si.*").up().up().up() //important to remember that even in a regex, it's lowercsae
                   .up().up(); // query, search
                   
                   t.setSize(100);
@@ -186,7 +186,7 @@ define([
    function performSearchTestGeoDistance() {
       var search = es.createSearch("names", "name");                 
       var t = search
-                .post_filter.geo_distance("loc", {"lat": 42.4811399, "loc": -83.494441}).distance("300mi").up().up()                
+                .post_filter.geo_distance("loc", {"lat": 42.4811399, "lon": -83.494441}).distance("300mi").up().up()                
                 //console.log("...",t, t.up(), t.up().up());
                 t.setSize(100);                  
       console.log(search.getBody());              
@@ -217,15 +217,15 @@ define([
    //console.log(es.indices, es.baseURL);
    
    es.indices.exists("names")
-        .then(deleteIndexIfExists)
-        .then(createIndex)
-        .then(setupMappings)
+        //.then(deleteIndexIfExists)
+        //.then(createIndex)
+        //.then(setupMappings)
         //.then(createDataInIndex)        
         //.then(waitForDocCount)
         //.then(performSearch)
-        //.then(performSearchTestRegEx)
-        //.then(performSearchTestBool)
-        //.then(performSearchTestGeoDistance)
+        .then(performSearchTestRegEx)
+        .then(performSearchTestBool)
+        .then(performSearchTestGeoDistance)
         //.then(performSimpleSearch)
    
    
