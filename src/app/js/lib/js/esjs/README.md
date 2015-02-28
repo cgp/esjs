@@ -11,8 +11,6 @@ Coded - Code support
 
 Query Type                    | Status
 ------------------------------|-----------
-match query                   |  
-multi match query             | 
 bool query                    | Coded
 boosting query                | Coded
 common terms query            | Coded
@@ -37,18 +35,16 @@ query string query            | Coded
 simple query string query     | Coded
 range query                   | Coded
 regexp query                  | Coded
-span first query              | 
-span multi term query         |
-span near query               |
+span first query              | Coded and Tested
+span multi term query         | Coded and Tested
+span near query               | 
 span not query                |
 span or query                 |
-span term query               |
+span term query               | Coded and Tested
 term query                    | Coded
 terms query                   | Coded
 top children query            | Coded
 wildcard query                | Coded
-minimum should match          |
-multi term query rewrite      |
 template query                |
 
 
@@ -77,11 +73,15 @@ prefix filter                 | (mostly taken from query)
 query filter                  | (mostly taken from query)
 range filter                  | (mostly taken from query)
 regexp filter                 | (mostly taken from query)
-script filter                 |
+script filter                 |  
 term filter                   | (mostly taken from query)
 terms filter                  | (mostly taken from query)
-type filter                   | 
+type filter                   | Coded
+
+
 
 Indices Support               | Status
 ------------------------------|----------
 Mappings                      | Coded and Tested
+
+

@@ -193,8 +193,39 @@ define([
       
       return search.execute().done(function(response) {
         console.log("performSearchGeoDistance()", response);
-      });           
+      });                 
+   }
+   
+   function performSearchTestSpanMultiMatch() {
+      var search = es.createSearch("names", "name");                 
+      console.log(search.query);
+      var t = search.query
+                      .span_first()
+                      .end(3)
+                      .match()
+                      .span_term("phrase").value('jbod');
+                search.setSize(100);                  
+      console.log(search.getBody());              
       
+      return search.execute().done(function(response) {
+        console.log("performSearchTestSpanMultiMatch()", response);
+      });                 
+   }
+   
+   function performSearchTestSpanFirst() {
+      var search = es.createSearch("names", "name");                 
+      console.log(search.query);
+      var t = search.query
+                      .span_first()
+                      .end(3)
+                      .match()
+                      .span_multi().match().prefix("phrase").value('prog');
+                search.setSize(100);                  
+      console.log(search.getBody());              
+      
+      return search.execute().done(function(response) {
+        console.log("performSearchTestSpanFirst()", response);
+      });                 
    }
    
    function performSimpleSearch() {
@@ -223,9 +254,12 @@ define([
         //.then(createDataInIndex)        
         //.then(waitForDocCount)
         //.then(performSearch)
-        .then(performSearchTestRegEx)
-        .then(performSearchTestBool)
-        .then(performSearchTestGeoDistance)
+        
+        //.then(performSearchTestRegEx)
+        //.then(performSearchTestBool)
+        //.then(performSearchTestGeoDistance)
+        //.then(performSearchTestSpanFirst)
+        .then(performSearchTestSpanMultiMatch)
         //.then(performSimpleSearch)
    
    

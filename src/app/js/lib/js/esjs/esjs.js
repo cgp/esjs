@@ -704,9 +704,28 @@ define([
                  'fields': {
                    'fuzzy': {'type': "Fuzzy"},
                    'prefix': {'type': "Prefix"},                   
-                   'range': {'type': "Range"},
+                   'range': {'type': "RangeQuery"},
                    'term': {'type': "Term"},
                    'wildcard': {'type': "Wildcard"},
+                 }
+    },
+    "SpanNear": {
+                 'fields': {
+                 }
+    },
+    "SpanNot": {
+                 'fields': {
+                 }
+    },
+    "SpanOr": {
+                 'fields': {
+                 }
+    },
+    "SpanTerm": {'accessor': 'term:SpanTermOpts'},
+    "SpanTermOpts": {
+                 'fields': {
+                   'value': {'type': "value"},
+                   'boost': {'type': "value"}
                  }
     },
     "Term": {'accessor': 'term:TermOpts'},
@@ -922,7 +941,7 @@ define([
       this.up = function() { return parent; }
       this.values = {};
       for(fieldName in typeInfo.fields) {
-        //console.log(typeName, fieldName);
+        console.log(typeName, fieldName);
         this[fieldName] = ES.FieldTypes[typeInfo.fields[fieldName].type].accessor(fieldName);
       }
       this.getBody = function(logstuff) { return Utils.getQueryDSLStruct(this.values, logstuff); }
@@ -1005,6 +1024,12 @@ define([
        'query_string': {'type': 'QueryString'},
        'range': {'type': 'RangeQuery'},
        'regexp': {'type': 'RegExp'},
+       'span_first': {'type': 'SpanFirst'},
+       'span_multi': {'type': 'SpanMulti'},
+       'span_near': {'type': 'SpanNear'},
+       'span_not': {'type': 'SpanNot'},
+       'span_or': {'type': 'SpanOr'},
+       'span_term': {'type': 'SpanTerm'},
        'simple_query_string': {'type': 'SimpleQueryString'},
        'term': {'type': 'Term'},
        'terms': {'type': 'Terms'},
