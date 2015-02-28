@@ -543,6 +543,7 @@ define([
                  'fields': {
                    'shape': {'type': 'value'}, // {"coordinates": coordinates, "type": shapeType}
                    'indexed_shape': {'type': 'value'}, // { "id": id, "type": type, "index": index, "path": path }
+                   '_cache': {'type': 'value'} // would only apply for a filter
                  }
     },
     "HasChild": {'fields': {
@@ -608,7 +609,10 @@ define([
                  'fields': {
                    'query': {'type': 'queryTypeValue'},
                    'path': {'type': 'value'},
-                   'score_mode': {'type': 'value'}
+                   'score_mode': {'type': 'value'},
+                   'join': {'type': 'value'},
+                   '_cache': {'type': 'value'}, 
+                   '_name': {'type': 'value'}
                  }
     },
     "Prefix": {'accessor': 'term:PrefixOpts'},
@@ -616,7 +620,8 @@ define([
                  'fields': {
                    'value': {'type': 'value'},
                    'prefix': {'type': 'value'},
-                   'boost': {'type': 'value'}
+                   'boost': {'type': 'value'},
+                   '_cache': {'type': 'value'}
                  }
     },
     "QueryString": {
@@ -663,6 +668,7 @@ define([
                    'lte': {'type': 'value'},
                    'lt': {'type': 'value'},
                    'boost': {'type': 'value'},
+                   '_cache': {'type': 'value'}                   
                  }
     },
     "RegExp": {'accessor': 'term:RegExpOpts'},
@@ -765,6 +771,69 @@ define([
                 '_cache': {'type': 'value'}
              }
     },
+    "GeoDistanceRangeFilter": {
+                'accessor': 'term:<none>',
+                'fields': {
+                'from': {'type': 'value'},
+                'to': {'type': 'value'},
+                'lt': {'type': 'value'},
+                'lte': {'type': 'value'},
+                'gt': {'type': 'value'},
+                'gte': {'type': 'value'},
+                'include_upper': {'type': 'value'},
+                'include_lower': {'type': 'value'},
+                'distance_type': {'type': 'value'}, // not sure if this is actually supported, but I think it is                
+                'optimize_bbox': {'type': 'value'}, // not sure if this is actually supported, but I think it is
+                '_cache': {'type': 'value'}
+             }
+    },
+    "GeoPolygonFilter": {'accessor': 'term:GeoPolygonFilterOpts',                },
+    "GeoPolygonFilterOpts": {
+                'fields': {
+                 'points': {'type': 'value'},
+                 '_cache': {'type': 'value'}
+                }
+    },
+    "GeoShapeFilter": {
+                'accessor': 'term:GeoShapeOpts', // query and filter share this structure
+                'fields': {
+                  
+                }             
+    },
+    "GeoHashCellFilter": {'accessor': 'term:GeoHashCellOpts'},
+    "GeoHashCellOpts": {
+                'fields': {
+                 'precision': {'type': 'value'},
+                 'neighbors': {'type': 'value'},
+                  '_cache': {'type': 'value'},
+                  '_cache_key': {'type': 'value'}
+                }
+    },
+    "LimitFilter": { 'fields': {
+                 'limit': {'type': 'value'},                 
+                }
+    },
+    "MissingFilter": { 'fields': {
+                 'field': {'type': 'value'},
+                 'existence': {'type': 'value'},
+                 'null_value': {'type': 'value'}                 
+                }
+    },
+    "NotFilter": {'fields': {
+                'filters': {'type': 'filterArray'},
+                '_cache': {'type': 'value'}
+             }
+    },
+    "OrFilter": {'fields': {
+                'filters': {'type': 'filterArray'},
+                '_cache': {'type': 'value'}
+             }
+    },
+    "TypeFilter": {'fields': {
+                'type': {'type': 'value'},
+                '_cache': {'type': 'value'}
+             }
+    },    
     "Mapping": {'accessor': 'term:MappingOpts'},
     "MappingOpts": {
            'fields': {
@@ -781,7 +850,6 @@ define([
                 'properties': {'type': 'FieldDefinitions'}
              }
     },
-        
     "queryArray": {
       "accessor": function(fieldName) {
         return function() {
@@ -844,7 +912,7 @@ define([
             return this.values[fieldName];
         };
       }
-    },    
+    },
   };
 
   function createType(typeInfo, typeName) {

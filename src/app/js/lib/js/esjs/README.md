@@ -37,7 +37,7 @@ query string query            | Coded
 simple query string query     | Coded
 range query                   | Coded
 regexp query                  | Coded
-span first query              |
+span first query              | 
 span multi term query         |
 span near query               |
 span not query                |
@@ -59,28 +59,28 @@ bool filter                   | Coded
 exists filter                 | Coded
 geo bounding box filter       | Coded
 geo distance filter           | Coded
-geo distance range filter     |
-geo polygon filter            |
-geoshape filter               |
-geohash cell filter           |
-has child filter              |
-has parent filter             |
-ids filter                    |
-indices filter                |
-limit filter                  |
-match all filter              |
-missing filter                |
-nested filter                 |
-not filter                    |
-or filter                     |
-prefix filter                 |
-query filter                  |
-range filter                  |
-regexp filter                 |
+geo distance range filter     | Coded
+geo polygon filter            | Coded
+geoshape filter               | Coded
+geohash cell filter           | Coded
+has child filter              | (taken from query)
+has parent filter             | (taken from query)
+ids filter                    | (taken from query)
+indices filter                | (taken from query)
+limit filter                  | Coded
+match all filter              | (taken from query)
+missing filter                | Coded
+nested filter                 | (mostly taken from query)
+not filter                    | Coded
+or filter                     | Coded
+prefix filter                 | (mostly taken from query)
+query filter                  | (mostly taken from query)
+range filter                  | (mostly taken from query)
+regexp filter                 | (mostly taken from query)
 script filter                 |
-term filter                   |
-terms filter                  |
-type filter                   |
+term filter                   | (mostly taken from query)
+terms filter                  | (mostly taken from query)
+type filter                   | 
 
 Indices Support               | Status
 ------------------------------|----------
