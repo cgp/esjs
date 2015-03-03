@@ -711,14 +711,24 @@ define([
     },
     "SpanNear": {
                  'fields': {
+                   "clauses": {'type': "[SpanFirstMatch]"},
+                   "slop": {'type': "value"},
+                   "in_order": {'type': "value"},
+                   "collect_payloads": {'type': "value"},
                  }
     },
     "SpanNot": {
                  'fields': {
+                   "include": {'type': "[SpanFirstMatch]"},
+                   "exclude": {'type': "[SpanFirstMatch]"},
+                   "pre": {'type': "value"},
+                   "post": {'type': "value"},
+                   "dist": {'type': "value"},
                  }
     },
     "SpanOr": {
                  'fields': {
+                   "clauses": {'type': "[SpanFirstMatch]"},
                  }
     },
     "SpanTerm": {'accessor': 'term:SpanTermOpts'},
@@ -806,7 +816,7 @@ define([
                 '_cache': {'type': 'value'}
              }
     },
-    "GeoPolygonFilter": {'accessor': 'term:GeoPolygonFilterOpts',                },
+    "GeoPolygonFilter": {'accessor': 'term:GeoPolygonFilterOpts'},
     "GeoPolygonFilterOpts": {
                 'fields': {
                  'points': {'type': 'value'},
@@ -868,7 +878,7 @@ define([
                 'include_in_all': {'type': 'value'},
                 'properties': {'type': 'FieldDefinitions'}
              }
-    },
+    },    
     "queryArray": {
       "accessor": function(fieldName) {
         return function() {
@@ -933,16 +943,31 @@ define([
       }
     },
   };
-
-  function createType(typeInfo, typeName) {
+  
+  function createType(typeInfo, typeName) {    
     var FieldType = function(parent) {
       //console.trace();
       //console.log(parent);
       this.up = function() { return parent; }
       this.values = {};
       for(fieldName in typeInfo.fields) {
-        console.log(typeName, fieldName);
-        this[fieldName] = ES.FieldTypes[typeInfo.fields[fieldName].type].accessor(fieldName);
+        var fieldType = typeInfo.fields[fieldName].type;
+        if (fieldType.substring(0, 1) == "[") {
+          var realFieldType = fieldType.substring(1,fieldType.length-1);
+          var subType = ES.FieldTypes[realFieldType];
+          this[fieldName] = function(fieldName) {
+            return function() {
+                if (typeof this.values[fieldName] == "undefined") {
+                  this.values[fieldName] = [];
+                }
+                var q = new subType.constructor(this);
+                this.values[fieldName].push(q);
+                return q;
+            };
+          }         
+        } else {
+          this[fieldName] = ES.FieldTypes[fieldType].accessor(fieldName);
+        }
       }
       this.getBody = function(logstuff) { return Utils.getQueryDSLStruct(this.values, logstuff); }
       this.typeName = typeName;
@@ -976,7 +1001,7 @@ define([
               };
         };
       }
-    } else {
+    } else {      
       typeInfo.accessor = function(fieldName) {
             return function(value) {
               if (typeof this.values[fieldName] == "undefined") {
@@ -993,7 +1018,7 @@ define([
   }
 
   for(type in ES.FieldTypes) {
-    if ((typeof ES.FieldTypes[type].accessor == "undefined") || (typeof ES.FieldTypes[type].accessor == "string")) {
+    if ((typeof ES.FieldTypes[type].accessor == "undefined") || (typeof ES.FieldTypes[type].accessor == "string")) {      
       ES.FieldTypes[type].constructor = createType(ES.FieldTypes[type], type); //sets the accessor and the constructor for a simple type
     }
   }
