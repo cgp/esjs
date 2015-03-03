@@ -955,16 +955,23 @@ define([
         if (fieldType.substring(0, 1) == "[") {
           var realFieldType = fieldType.substring(1,fieldType.length-1);
           var subType = ES.FieldTypes[realFieldType];
+          console.log("--------",subType, realFieldType);
           this[fieldName] = function(fieldName) {
-            return function() {
-                if (typeof this.values[fieldName] == "undefined") {
-                  this.values[fieldName] = [];
-                }
-                var q = new subType.constructor(this);
-                this.values[fieldName].push(q);
-                return q;
-            };
-          }         
+                return function() {
+                    if (typeof this.values[fieldName] == "undefined") {
+                      console.log('aga');
+                      this.values[fieldName] = [];
+                    } else {
+                      console.log('not so much');
+                    }
+                    
+                    console.log(this.values);
+                    var q = new subType.constructor(this);
+                    console.log(q, fieldName, this.values[fieldName]);
+                    this.values[fieldName].push(q);
+                    return q;
+              };
+          }(fieldName);
         } else {
           this[fieldName] = ES.FieldTypes[fieldType].accessor(fieldName);
         }

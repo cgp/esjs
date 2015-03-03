@@ -228,6 +228,21 @@ define([
       });                 
    }
    
+   function performSearchTestSpanOr() {
+      var search = es.createSearch("names", "name");                 
+      console.log(search.query);
+      var t = search.query
+                      t=t.span_or(); console.log("...",t);
+                     t= t.clauses(); console.log("qqq",t);
+                      t.span_multi().match().prefix("phrase").value('prog');
+                search.setSize(100);                  
+      console.log(search.getBody());              
+      
+      return search.execute().done(function(response) {
+        console.log("performSearchTestSpanOr()", response);
+      });                 
+   }
+   
    function performSimpleSearch() {
       var search = es.createSearch();         
       search.setSize(25)
@@ -259,7 +274,8 @@ define([
         //.then(performSearchTestBool)
         //.then(performSearchTestGeoDistance)
         //.then(performSearchTestSpanFirst)
-        .then(performSearchTestSpanMultiMatch)
+        //.then(performSearchTestSpanMultiMatch)
+        .then(performSearchTestSpanOr)
         //.then(performSimpleSearch)
    
    
