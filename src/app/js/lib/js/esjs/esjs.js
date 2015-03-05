@@ -74,7 +74,7 @@ define([
     this.up = function() { return parent; }
     this.getBody = getBodyFunc;
   }
-  
+
   /**
   Provides the base Widget class...
 
@@ -611,7 +611,7 @@ define([
                    'path': {'type': 'value'},
                    'score_mode': {'type': 'value'},
                    'join': {'type': 'value'},
-                   '_cache': {'type': 'value'}, 
+                   '_cache': {'type': 'value'},
                    '_name': {'type': 'value'}
                  }
     },
@@ -668,7 +668,7 @@ define([
                    'lte': {'type': 'value'},
                    'lt': {'type': 'value'},
                    'boost': {'type': 'value'},
-                   '_cache': {'type': 'value'}                   
+                   '_cache': {'type': 'value'}
                  }
     },
     "RegExp": {'accessor': 'term:RegExpOpts'},
@@ -703,7 +703,7 @@ define([
     "SpanMultiMatch": {
                  'fields': {
                    'fuzzy': {'type': "Fuzzy"},
-                   'prefix': {'type': "Prefix"},                   
+                   'prefix': {'type': "Prefix"},
                    'range': {'type': "RangeQuery"},
                    'term': {'type': "Term"},
                    'wildcard': {'type': "Wildcard"},
@@ -745,16 +745,16 @@ define([
                    'prefix': {'type': 'value'},
                    'boost': {'type': 'value'}
                  }
-    },    
+    },
     "Terms": {
                  'fields': {
-                   'tags': {'type': 'value'},                   
+                   'tags': {'type': 'value'},
                    'minimum_should_match': {'type': 'value'}
                  }
     },
     "TopChildren": {
                  'fields': {
-                   'type': {'type': 'value'},                   
+                   'type': {'type': 'value'},
                    'query': {'type': 'queryTypeValue'},
                    'score': {'type': 'value'},
                    'factor': {'type': 'value'},
@@ -767,8 +767,8 @@ define([
                    'value': {'type': 'value'},
                    'wildcard': {'type': 'value'},
                    'boost': {'type': 'value'}
-                 }    
-    },       
+                 }
+    },
     "AndFilter": {'fields': {
                 'filters': {'type': 'filterArray'},
                 '_cache': {'type': 'value'}
@@ -780,17 +780,17 @@ define([
                 'must_not': {'type': 'filterArray'},
                 'minimum_should_match': {'type': 'value'},
                 'boost': {'type': 'value'},
-             }             
+             }
     },
     "ExistsFilter": {'fields': {
                 'field': {'type': 'value'}
-             }             
+             }
     },
     "GeoBoundingBoxFilter": {'fields': {
                 'type': {'type': 'value'},
                 '_cache': {'field': 'value'}
              }
-    },    
+    },
     "GeoDistanceFilter": {
                 'accessor': 'term:<none>',
                 'fields': {
@@ -811,7 +811,7 @@ define([
                 'gte': {'type': 'value'},
                 'include_upper': {'type': 'value'},
                 'include_lower': {'type': 'value'},
-                'distance_type': {'type': 'value'}, // not sure if this is actually supported, but I think it is                
+                'distance_type': {'type': 'value'}, // not sure if this is actually supported, but I think it is
                 'optimize_bbox': {'type': 'value'}, // not sure if this is actually supported, but I think it is
                 '_cache': {'type': 'value'}
              }
@@ -826,8 +826,8 @@ define([
     "GeoShapeFilter": {
                 'accessor': 'term:GeoShapeOpts', // query and filter share this structure
                 'fields': {
-                  
-                }             
+
+                }
     },
     "GeoHashCellFilter": {'accessor': 'term:GeoHashCellOpts'},
     "GeoHashCellOpts": {
@@ -839,13 +839,13 @@ define([
                 }
     },
     "LimitFilter": { 'fields': {
-                 'limit': {'type': 'value'},                 
+                 'limit': {'type': 'value'},
                 }
     },
     "MissingFilter": { 'fields': {
                  'field': {'type': 'value'},
                  'existence': {'type': 'value'},
-                 'null_value': {'type': 'value'}                 
+                 'null_value': {'type': 'value'}
                 }
     },
     "NotFilter": {'fields': {
@@ -862,7 +862,39 @@ define([
                 'type': {'type': 'value'},
                 '_cache': {'type': 'value'}
              }
-    },    
+    },
+    "Aggs": {'accessor': 'name:AggsOpts'},
+    "AggsOpts": {'fields': {
+                'min': {'type': 'AggsMin'},
+                'max': {'type': 'AggsMax'},
+                'sum': {'type': 'AggsSum'},
+                'avg': {'type': 'AggsAvg'},
+                'stats': {'type': 'AggsStats'},
+                'extended_stats': {'type': 'AggsStats'},
+                'value_count': {'type': 'AggsStats'},
+                'percentiles': {'type': 'AggsPercentiles'},
+                'percentile_ranks': {'type': 'AggsPercentiles'},
+                'cardinality': {'type': 'AggsPercentiles'},
+                'geo_bounds': {'type': 'AggsPercentiles'},
+                'top_hits': {'type': 'AggsPercentiles'},
+                'global': {'type': 'AggsPercentiles'}, // bucketer
+                'filter': {'type': 'AggsPercentiles'}, // bucketer
+                'filters': {'type': 'AggsPercentiles'}, // bucketer
+                'missing': {'type': 'AggsPercentiles'}, // bucketer
+                'nested': {'type': 'AggsPercentiles'}, // bucketer
+                'reverse_nested': {'type': 'AggsPercentiles'}, // bucketer
+                'children': {'type': 'AggsPercentiles'}, // bucketer
+                'terms': {'type': 'AggsPercentiles'}, // bucketer
+                'significant_terms': {'type': 'AggsPercentiles'}, // bucketer
+                'range': {'type': 'AggsPercentiles'}, // bucketer
+                'date_range': {'type': 'AggsPercentiles'}, // bucketer
+                'ipv4_rane': {'type': 'AggsPercentiles'}, // bucketer
+                'histogram': {'type': 'AggsPercentiles'}, // bucketer
+                'date_histogram': {'type': 'AggsPercentiles'}, // bucketer
+                'geo_distance': {'type': 'AggsPercentiles'}, // bucketer
+                'geohash_grid': {'type': 'AggsPercentiles'}, // bucketer
+             }
+    },
     "Mapping": {'accessor': 'term:MappingOpts'},
     "MappingOpts": {
            'fields': {
@@ -878,7 +910,7 @@ define([
                 'include_in_all': {'type': 'value'},
                 'properties': {'type': 'FieldDefinitions'}
              }
-    },    
+    },
     "queryArray": {
       "accessor": function(fieldName) {
         return function() {
@@ -943,8 +975,8 @@ define([
       }
     },
   };
-  
-  function createType(typeInfo, typeName) {    
+
+  function createType(typeInfo, typeName) {
     var FieldType = function(parent) {
       //console.trace();
       //console.log(parent);
@@ -964,7 +996,7 @@ define([
                     } else {
                       console.log('not so much');
                     }
-                    
+
                     console.log(this.values);
                     var q = new subType.constructor(this);
                     console.log(q, fieldName, this.values[fieldName]);
@@ -981,21 +1013,21 @@ define([
     }
 
     if (typeof typeInfo.accessor == "string") {
-      if (typeInfo.accessor.substring(0, 5) == "term:") {
+      if ((typeInfo.accessor.substring(0, 5) == "term:") || (typeInfo.accessor.substring(0, 5) == "name:")) {
         var subTypeStr = typeInfo.accessor.substring(5);
         var subType = ES.FieldTypes[subTypeStr];
-        
+
         typeInfo.accessor = function(fieldName) {
               return function(term, value) {
                 if (typeof this.values[fieldName] == "undefined") {
-                  this.values[fieldName] = new FieldType(this);                  
+                  this.values[fieldName] = new FieldType(this);
                 }
                 if (typeof this.values[fieldName].values[term] == "undefined") {
-                  if (subTypeStr === "<none>") {                    
+                  if (subTypeStr === "<none>") {
                      this.values[fieldName].values[term] = {}; // just an obj
-                  } else {                    
+                  } else {
                      this.values[fieldName].values[term] = new subType.constructor(this.values[fieldName]);
-                  }                
+                  }
                 }
                 if (typeof value != 'undefined') {
                   this.values[fieldName].values[term] = value;
@@ -1008,15 +1040,15 @@ define([
               };
         };
       }
-    } else {      
+    } else {
       typeInfo.accessor = function(fieldName) {
             return function(value) {
               if (typeof this.values[fieldName] == "undefined") {
                 this.values[fieldName] = new FieldType(this);
-              } 
+              }
               if (typeof value != 'undefined') {
                   this.values[fieldName].values = value;
-              }              
+              }
               return this.values[fieldName];
             };
       };
@@ -1025,7 +1057,7 @@ define([
   }
 
   for(type in ES.FieldTypes) {
-    if ((typeof ES.FieldTypes[type].accessor == "undefined") || (typeof ES.FieldTypes[type].accessor == "string")) {      
+    if ((typeof ES.FieldTypes[type].accessor == "undefined") || (typeof ES.FieldTypes[type].accessor == "string")) {
       ES.FieldTypes[type].constructor = createType(ES.FieldTypes[type], type); //sets the accessor and the constructor for a simple type
     }
   }
@@ -1092,6 +1124,8 @@ define([
       if (filterPart != null) {
         querySearchBody.query.filter = filterPart;
       }
+      
+      
       if (Object.keys(querySearchBody).length > 0) {
         return querySearchBody;
       } else {
@@ -1117,7 +1151,20 @@ define([
        this[fieldName] = ES.FieldTypes[fields[fieldName].type].accessor(fieldName);
     }
     this.getBody = function(logstuff) {return Utils.getQueryDSLStruct(this.values, logstuff)};
-  }  
+  }
+
+  ES.Aggregations = function() {
+    var that = this;
+    this.up = function() { return that }
+    this.values = {};
+    var fields = {
+       'aggs': {'type': 'Aggs'},
+    };
+    for(fieldName in fields) {
+       this[fieldName] = ES.FieldTypes[fields[fieldName].type].accessor(fieldName);
+    }
+    this.getBody = function(logstuff) {return this.values['aggs'].getBody()};
+  }
   
   ES.Mapping = function() {
     var that = this;
@@ -1126,11 +1173,11 @@ define([
     var fields = {
        'mapping': {'type': 'Mapping'},
     };
-    for(fieldName in fields) {       
+    for(fieldName in fields) {
        this[fieldName] = ES.FieldTypes[fields[fieldName].type].accessor(fieldName);
     }
     this.getBody = function(logstuff) {return this.values['mapping'].getBody()};
-  }  
+  }
 
 	window.ES = ES;
 	return ES;

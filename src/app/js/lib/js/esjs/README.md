@@ -1,7 +1,7 @@
 This is sort of a Roadmap/Featurelist, a simple way to track what is or isn't supported
 yet as part of esjs....
 
-Legend: 
+Legend:
 ------
 Done - Code Support, Documented, Tested
 Mostly Done - Coded but either Documented or Tested, but not both
@@ -19,7 +19,7 @@ dis max query                 | Coded
 filtered query                | Coded
 fuzzy like this query         | Coded
 fuzzy like this field query   | (not needed)
-function score query          | 
+function score query          |
 fuzzy query                   | Coded
 geoshape query                | Coded
 has child query               | Coded
@@ -73,7 +73,7 @@ prefix filter                 | (mostly taken from query)
 query filter                  | (mostly taken from query)
 range filter                  | (mostly taken from query)
 regexp filter                 | (mostly taken from query)
-script filter                 |  
+script filter                 |
 term filter                   | (mostly taken from query)
 terms filter                  | (mostly taken from query)
 type filter                   | Coded
@@ -85,3 +85,34 @@ Indices Support               | Status
 Mappings                      | Coded and Tested
 
 
+Aggs Support                  | Status
+------------------------------|----------
+min aggregation               |
+max aggregation               |
+sum aggregation               |
+avg aggregation               |
+stats aggregation             |
+extended stats aggregation    |
+value count aggregation       |
+percentiles aggregation       |
+percentile ranks aggregation  |
+cardinality aggregation       |
+geo bounds aggregation        |
+top hits aggregation          |
+scripted metric aggregation   |
+global aggregation            |
+filter aggregation            |
+filters aggregation           |
+missing aggregation           |
+nested aggregation            |
+reverse nested aggregation    |
+children aggregation          |
+terms aggregation             |
+significant terms aggregation |
+range aggregation             |
+date range aggregation        |
+ipv4 range aggregation        |
+histogram aggregation         |
+date histogram aggregation    |
+geo distance aggregation      |
+geohash grid aggregation      |
