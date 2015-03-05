@@ -243,6 +243,23 @@ define([
       });                 
    }
    
+   function performSearchTestSpanNear() {
+      var search = es.createSearch("names", "name");                 
+      console.log(search.query);
+      
+      var spanQueryPart = search.query.span_near().slop(4).in_order(true).collect_payloads(true);      
+      spanQueryPart.clauses().span_multi().match().prefix("phrase").value('prog');
+      spanQueryPart.clauses().span_multi().match().prefix("phrase").value('optical');
+      spanQueryPart.clauses().span_multi().match().prefix("phrase").value('prog');      
+      
+      search.setSize(100);                  
+      console.log(search.getBody());              
+      
+      return search.execute().done(function(response) {
+        console.log("performSearchTestSpanNear()", response);
+      });                 
+   }   
+   
    function performSimpleSearch() {
       var search = es.createSearch();         
       search.setSize(25)
@@ -275,7 +292,7 @@ define([
         //.then(performSearchTestGeoDistance)
         //.then(performSearchTestSpanFirst)
         //.then(performSearchTestSpanMultiMatch)
-        .then(performSearchTestSpanOr)
+        .then(performSearchTestSpanNear)
         //.then(performSimpleSearch)
    
    

@@ -37,9 +37,9 @@ range query                   | Coded
 regexp query                  | Coded
 span first query              | Coded and Tested
 span multi term query         | Coded and Tested
-span near query               | 
-span not query                |
-span or query                 |
+span near query               | Coded and Tested
+span not query                | Coded
+span or query                 | Coded and Tested
 span term query               | Coded and Tested
 term query                    | Coded
 terms query                   | Coded
