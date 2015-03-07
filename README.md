@@ -1,7 +1,7 @@
 # esjs
 Elasticsearch JavaScript client that doesn't suck. (Hopefully)
 
-1. Lightweight (< 15k compressed)
+1. Fairly Lightweight (< 30k compressed)
 2. In the spirit of the ES query language, but not so much as to over-complicate performing queries
 3. Ability to run server side in Java 
 4. Convenience parsing/formatting for return structures such as hits, histograms etc... (and the ability to extend via plugins to for tools like DS3/C3 etc..)
