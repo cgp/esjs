@@ -314,7 +314,7 @@ define([
     this.post_filter = new ES.Filter(this);
     this.sorts = [];
     this.searchUrlVals = {};
-    this.aggs = []; // we're going to implement facets this way of course
+    this.aggs = new ES.Aggregations(this); // we're going to implement facets this way of course
     this.query = new ES.Query(this);
   }
 

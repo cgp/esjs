@@ -260,6 +260,21 @@ define([
       });                 
    }   
    
+   function performSearchTestAggs() {
+      var search = es.createSearch("names", "name");                 
+      console.log(search.query);
+      
+      var spanQueryPart = search.query.aggs();
+      
+      search.setSize(100);                  
+      console.log(search.getBody());              
+      
+      return search.execute().done(function(response) {
+        console.log("performSearchTestAggs()", response);
+      });                 
+   }   
+   
+   
    function performSimpleSearch() {
       var search = es.createSearch();         
       search.setSize(25)
@@ -292,7 +307,8 @@ define([
         //.then(performSearchTestGeoDistance)
         //.then(performSearchTestSpanFirst)
         //.then(performSearchTestSpanMultiMatch)
-        .then(performSearchTestSpanNear)
+        //.then(performSearchTestSpanNear)
+        .then(performSearchTestAggs)
         //.then(performSimpleSearch)
    
    
