@@ -264,7 +264,8 @@ define([
       var search = es.createSearch("names", "name");                 
       console.log(search.query);
       
-      var spanQueryPart = search.query.aggs();
+      var spanQueryPart = search.aggs;
+      console.log(search.aggs.aggs("bob"));
       
       search.setSize(100);                  
       console.log(search.getBody());              

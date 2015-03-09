@@ -315,7 +315,7 @@ define([
     this.sorts = [];
     this.searchUrlVals = {};
     this.aggs = new ES.Aggregations(this); // we're going to implement facets this way of course
-    this.query = new ES.Query(this);
+    this.query = new ES.Query(this);    
   }
 
   $.extend(ES.Search.prototype, {
