@@ -468,6 +468,10 @@ define([
       if (filterPart != null) {
         querySearchBody.post_filter = filterPart;
       }
+      var aggsPart = this.aggs.getBody(logstuff);
+      if (aggsPart != null) {
+        querySearchBody.aggs = aggsPart;
+      }      
       return querySearchBody;
     },
     /**
@@ -865,16 +869,16 @@ define([
     },
     "Aggs": {'accessor': 'name:AggsOpts'},
     "AggsOpts": {'fields': {
-                'min': {'type': 'AggsMin'},
-                'max': {'type': 'AggsMax'},
-                'sum': {'type': 'AggsSum'},
-                'avg': {'type': 'AggsAvg'},
-                'stats': {'type': 'AggsStats'},
-                'extended_stats': {'type': 'AggsStats'},
-                'value_count': {'type': 'AggsStats'},
+                'min': {'type': 'AggByField'},
+                'max': {'type': 'AggByField'},
+                'sum': {'type': 'AggByField'}, 
+                'avg': {'type': 'AggByField'},
+                'stats': {'type': 'AggByField'},
+                'extended_stats': {'type': 'AggByField'},
+                'value_count': {'type': 'AggByField'},
                 'percentiles': {'type': 'AggsPercentiles'},
-                'percentile_ranks': {'type': 'AggsPercentiles'},
-                'cardinality': {'type': 'AggsPercentiles'},
+                'percentile_ranks': {'type': 'AggByField'},
+                'cardinality': {'type': 'AggsCardinality'},
                 'geo_bounds': {'type': 'AggsPercentiles'},
                 'top_hits': {'type': 'AggsPercentiles'},
                 'global': {'type': 'AggsPercentiles'}, // bucketer
@@ -894,6 +898,23 @@ define([
                 'geo_distance': {'type': 'AggsPercentiles'}, // bucketer
                 'geohash_grid': {'type': 'AggsPercentiles'}, // bucketer
              }
+    },
+    "AggByField": {'fields': {
+                     'field': {'type': 'value'},
+                     'script': {'type': 'value'},
+                     'params': {'type': 'value'},
+                   }
+    },
+    "AggsPercentiles": {'fields': {
+                     'field': {'type': 'value'},
+                     'percentiles': {'type': 'value'},                     
+                   }
+    },
+    "AggsCardinality": {'fields': {
+                     'field': {'type': 'value'},
+                     'precision_threshold': {'type': 'value'},                     
+                     'rehash': {'type': 'value'},
+                   }
     },
     "Mapping": {'accessor': 'term:MappingOpts'},
     "MappingOpts": {
@@ -984,6 +1005,7 @@ define([
       this.values = {};
       for(fieldName in typeInfo.fields) {
         var fieldType = typeInfo.fields[fieldName].type;
+        console.log(fieldName, fieldType);
         if (fieldType.substring(0, 1) == "[") {
           var realFieldType = fieldType.substring(1,fieldType.length-1);
           var subType = ES.FieldTypes[realFieldType];
@@ -1005,6 +1027,7 @@ define([
               };
           }(fieldName);
         } else {
+          console.log(fieldType);
           this[fieldName] = ES.FieldTypes[fieldType].accessor(fieldName);
         }
       }

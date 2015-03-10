@@ -87,19 +87,19 @@ Mappings                      | Coded and Tested
 
 Aggs Support                  | Status
 ------------------------------|----------
-min aggregation               |
-max aggregation               |
-sum aggregation               |
-avg aggregation               |
-stats aggregation             |
-extended stats aggregation    |
-value count aggregation       |
-percentiles aggregation       |
-percentile ranks aggregation  |
-cardinality aggregation       |
-geo bounds aggregation        |
-top hits aggregation          |
-scripted metric aggregation   |
+min aggregation               | Coded
+max aggregation               | Coded
+sum aggregation               | Coded
+avg aggregation               | Coded
+stats aggregation             | Coded
+extended stats aggregation    | Coded
+value count aggregation       | Coded
+percentiles aggregation       | Coded
+percentile ranks aggregation  | Coded
+cardinality aggregation       | Coded
+geo bounds aggregation        |  - 
+top hits aggregation          |  - 
+scripted metric aggregation   | 
 global aggregation            |
 filter aggregation            |
 filters aggregation           |
