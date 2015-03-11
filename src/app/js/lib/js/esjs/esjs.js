@@ -879,12 +879,13 @@ define([
                 'percentiles': {'type': 'AggsPercentiles'},
                 'percentile_ranks': {'type': 'AggByField'},
                 'cardinality': {'type': 'AggsCardinality'},
-                'geo_bounds': {'type': 'AggsPercentiles'},
-                'top_hits': {'type': 'AggsPercentiles'},
-                'global': {'type': 'AggsPercentiles'}, // bucketer
-                'filter': {'type': 'AggsPercentiles'}, // bucketer
-                'filters': {'type': 'AggsPercentiles'}, // bucketer
-                'missing': {'type': 'AggsPercentiles'}, // bucketer
+                //'geo_bounds': {'type': 'AggByField'}, 
+                //'top_hits': {'type': 'AggByField'},
+                'global': {'type': 'AggsGlobal'}, // filterer
+                'filter': {'type': 'AggsFilters'}, // bucket
+                'filters': {'type': 'AggsFilters'}, // bucketer
+                
+                'missing': {'type': 'AggsPercentiles'}, // filterer
                 'nested': {'type': 'AggsPercentiles'}, // bucketer
                 'reverse_nested': {'type': 'AggsPercentiles'}, // bucketer
                 'children': {'type': 'AggsPercentiles'}, // bucketer
@@ -916,6 +917,22 @@ define([
                      'rehash': {'type': 'value'},
                    }
     },
+    "AggsGlobal": {'fields': {
+                     'global': {'type': 'value'},
+                     'aggs': {'type': 'Aggs'},                                          
+                   }
+    },
+    "AggsFilter": {'fields': {
+                     'filter': {'type': 'filterTypeValue'},
+                     'aggs': {'type': 'Aggs'},                                          
+                   }
+    },  
+    "AggsFilters": {'fields': {
+                     'filters': {'type': 'AggsFiltersOpt'},
+                     'aggs': {'type': 'Aggs'},                                          
+                   }
+    },    
+    "AggsFiltersOpt": {'accessor': 'name:filterTypeValue'},
     "Mapping": {'accessor': 'term:MappingOpts'},
     "MappingOpts": {
            'fields': {
@@ -1005,7 +1022,7 @@ define([
       this.values = {};
       for(fieldName in typeInfo.fields) {
         var fieldType = typeInfo.fields[fieldName].type;
-        console.log(fieldName, fieldType);
+        //console.log(fieldName, fieldType);
         if (fieldType.substring(0, 1) == "[") {
           var realFieldType = fieldType.substring(1,fieldType.length-1);
           var subType = ES.FieldTypes[realFieldType];
@@ -1027,7 +1044,7 @@ define([
               };
           }(fieldName);
         } else {
-          console.log(fieldType);
+          //console.log(fieldType);
           this[fieldName] = ES.FieldTypes[fieldType].accessor(fieldName);
         }
       }

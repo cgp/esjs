@@ -188,8 +188,7 @@ define([
       var t = search
                 .post_filter.geo_distance("loc", {"lat": 42.4811399, "lon": -83.494441}).distance("300mi").up().up()                
                 //console.log("...",t, t.up(), t.up().up());
-                t.setSize(100);                  
-      console.log(search.getBody());              
+                t.setSize(100);                        
       
       return search.execute().done(function(response) {
         console.log("performSearchGeoDistance()", response);
@@ -204,8 +203,7 @@ define([
                       .end(3)
                       .match()
                       .span_term("phrase").value('jbod');
-                search.setSize(100);                  
-      console.log(search.getBody());              
+                search.setSize(100);                        
       
       return search.execute().done(function(response) {
         console.log("performSearchTestSpanMultiMatch()", response);
@@ -220,8 +218,7 @@ define([
                       .end(3)
                       .match()
                       .span_multi().match().prefix("phrase").value('prog');
-                search.setSize(100);                  
-      console.log(search.getBody());              
+                search.setSize(100);                        
       
       return search.execute().done(function(response) {
         console.log("performSearchTestSpanFirst()", response);
@@ -235,8 +232,7 @@ define([
                       t=t.span_or(); console.log("...",t);
                      t= t.clauses(); console.log("qqq",t);
                       t.span_multi().match().prefix("phrase").value('prog');
-                search.setSize(100);                  
-      console.log(search.getBody());              
+                search.setSize(100);                        
       
       return search.execute().done(function(response) {
         console.log("performSearchTestSpanOr()", response);
@@ -252,8 +248,7 @@ define([
       spanQueryPart.clauses().span_multi().match().prefix("phrase").value('optical');
       spanQueryPart.clauses().span_multi().match().prefix("phrase").value('prog');      
       
-      search.setSize(100);                  
-      console.log(search.getBody());              
+      search.setSize(100);                        
       
       return search.execute().done(function(response) {
         console.log("performSearchTestSpanNear()", response);
@@ -264,14 +259,30 @@ define([
       var search = es.createSearch("names", "name");                 
       console.log(search.query);
       
-      var spanQueryPart = search.aggs.aggs("bob");
-      var t = spanQueryPart.extended_stats().field("number");            
+      var agg = search.aggs.aggs("bob");
+      var t = agg.extended_stats().field("number");            
       
-      search.setSize(100);                  
-      console.log(search.getBody());              
+      search.setSize(100);                        
       
       return search.execute().done(function(response) {
         console.log("performSearchTestAggs()", response);
+      });                 
+   }   
+   
+   function performSearchTestAggFilters() {
+      var search = es.createSearch("names", "name");                 
+      console.log(search.query);
+      
+      var agg = search.aggs.aggs("bob");
+      var t = agg.filters().filters("steve");
+      
+      console.log(agg, t);            
+      t.term("phrase").value('fax');
+      
+      search.setSize(100);                        
+      
+      return search.execute().done(function(response) {
+        console.log("performSearchTestAggFilters()", response);
       });                 
    }   
    
@@ -309,11 +320,8 @@ define([
         //.then(performSearchTestSpanFirst)
         //.then(performSearchTestSpanMultiMatch)
         //.then(performSearchTestSpanNear)
-        .then(performSearchTestAggs)
+        //.then(performSearchTestAggs)
+        .then(performSearchTestAggFilters)
         //.then(performSimpleSearch)
-   
-   
-   
-   
-   
+    
 });

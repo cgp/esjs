@@ -99,9 +99,9 @@ percentile ranks aggregation  | Coded
 cardinality aggregation       | Coded
 geo bounds aggregation        |  - 
 top hits aggregation          |  - 
-scripted metric aggregation   | 
-global aggregation            |
-filter aggregation            |
+scripted metric aggregation   |  - 
+global aggregation            | Coded
+filter aggregation            | 
 filters aggregation           |
 missing aggregation           |
 nested aggregation            |
