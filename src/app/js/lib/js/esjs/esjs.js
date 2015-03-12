@@ -1202,8 +1202,8 @@ define([
     };
     for(fieldName in fields) {
        this[fieldName] = ES.FieldTypes[fields[fieldName].type].accessor(fieldName);
-    }
-    this.getBody = function(logstuff) {return this.values['aggs'].getBody()};
+    }    
+    this.getBody = function(logstuff) {if (typeof this.values.aggs == 'undefined') {return null} else {this.values['aggs'].getBody()}};
   }
   
   ES.Mapping = function() {

@@ -316,7 +316,7 @@ define([
         
         //.then(performSearchTestRegEx)
         //.then(performSearchTestBool)
-        //.then(performSearchTestGeoDistance)
+        .then(performSearchTestGeoDistance)
         //.then(performSearchTestSpanFirst)
         //.then(performSearchTestSpanMultiMatch)
         //.then(performSearchTestSpanNear)
