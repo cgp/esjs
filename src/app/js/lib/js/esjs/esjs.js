@@ -54,6 +54,7 @@ define([
       if (typeof logstuff != "undefined") {
         //console.log("in", queryDSLStruct);
       }
+      console.log(queryDSLStruct);
       var keys = Object.keys(queryDSLStruct);
       if (keys.length == 0) {
         return null;
@@ -469,6 +470,7 @@ define([
         querySearchBody.post_filter = filterPart;
       }
       var aggsPart = this.aggs.getBody(logstuff);
+      
       if (aggsPart != null) {
         querySearchBody.aggs = aggsPart;
       }      
@@ -928,7 +930,7 @@ define([
                    }
     },  
     "AggsFilters": {'fields': {
-                     'filters': {'type': 'AggsFiltersOpt'},
+                     'filters': {'type': 'filterTypeValue'},
                      'aggs': {'type': 'Aggs'},                                          
                    }
     },    
@@ -1203,7 +1205,7 @@ define([
     for(fieldName in fields) {
        this[fieldName] = ES.FieldTypes[fields[fieldName].type].accessor(fieldName);
     }    
-    this.getBody = function(logstuff) {if (typeof this.values.aggs == 'undefined') {return null} else {this.values['aggs'].getBody()}};
+    this.getBody = function(logstuff) {if (typeof this.values.aggs == 'undefined') {return null} else {Utils.getQueryDSLStruct(this.values.aggs, logstuff)}};
   }
   
   ES.Mapping = function() {
