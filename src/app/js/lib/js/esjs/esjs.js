@@ -1,7 +1,6 @@
 define([
 	"jquery",
-  "jsonpath"
-], function ($, JSONPath) {
+], function ($) {
   var Utils = {
    "isUndefinedOrNull": function(val) {
                           return (typeof val == "undefined") || (val == null);
