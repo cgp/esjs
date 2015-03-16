@@ -87,13 +87,13 @@ Mappings                      | Coded and Tested
 
 Aggs Support                  | Status
 ------------------------------|----------
-min aggregation               | Coded
-max aggregation               | Coded
-sum aggregation               | Coded
-avg aggregation               | Coded
-stats aggregation             | Coded
-extended stats aggregation    | Coded
-value count aggregation       | Coded
+min aggregation               | Coded and Tested
+max aggregation               | Coded and Tested
+sum aggregation               | Coded and Tested
+avg aggregation               | Coded and Tested
+stats aggregation             | Coded and Tested
+extended stats aggregation    | Coded and Tested
+value count aggregation       | Coded and Tested
 percentiles aggregation       | Coded
 percentile ranks aggregation  | Coded
 cardinality aggregation       | Coded
