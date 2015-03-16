@@ -93,7 +93,7 @@ sum aggregation               | Coded and Tested
 avg aggregation               | Coded and Tested
 stats aggregation             | Coded and Tested
 extended stats aggregation    | Coded and Tested
-value count aggregation       | Coded and Tested
+value count aggregation       | Coded and Tested  
 percentiles aggregation       | Coded
 percentile ranks aggregation  | Coded
 cardinality aggregation       | Coded
