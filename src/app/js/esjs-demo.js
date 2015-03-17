@@ -279,8 +279,7 @@ define([
       console.log(agg, t);            
       t.term("phrase").value('fax');
       
-      search.setSize(100);                        
-      console.log(search.getBody());
+      search.setSize(100);                              
       return search.execute().done(function(response) {
         console.log("performSearchTestAggFilters()", response);
       });                 

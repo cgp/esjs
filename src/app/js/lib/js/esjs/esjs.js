@@ -53,19 +53,20 @@ define([
       if (typeof logstuff != "undefined") {
         //console.log("in", queryDSLStruct);
       }
-   //   console.log(queryDSLStruct);
+      //console.log(queryDSLStruct);
       var keys = Object.keys(queryDSLStruct);
-      if (keys.length == 0) {
+      if (keys.length == 0) {        
         return null;
       }
       var body = {};
       for(var x=0;x<keys.length;x++) {
- //       console.log(keys[x]);
+        //console.log(keys[x]);
         body[keys[x]] = Utils.getVal(queryDSLStruct[keys[x]], logstuff);
       }
       if (typeof logstuff != "undefined") {
         //console.log("result", body, JSON.stringify(body));
       }
+      console.log("body", body);
       return body;
     }
   };
@@ -1205,7 +1206,7 @@ define([
     for(fieldName in fields) {
        this[fieldName] = ES.FieldTypes[fields[fieldName].type].accessor(fieldName);
     }    
-    this.getBody = function(logstuff) {if (typeof this.values.aggs == 'undefined') {return null} else {console.log(this.values.aggs.values);Utils.getQueryDSLStruct(this.values.aggs.values, logstuff)}};
+    this.getBody = function(logstuff) {if (typeof this.values.aggs == 'undefined') {return null} else {console.log(this.values.aggs.values);return Utils.getQueryDSLStruct(this.values.aggs.values, logstuff)}};
   }
   
   ES.Mapping = function() {
