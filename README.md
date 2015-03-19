@@ -9,6 +9,8 @@ Elasticsearch JavaScript client that doesn't suck. (Hopefully)
 6. Some type of lazily evaluated expression language
 7. plain text queries
 8. YML style query building
+9. intelligent in index setup
+10. 
 
 ### Example Usage (in process) 
     var es = new ES.Client(); // assume same domain but port 9200 for now, CORS support needed
