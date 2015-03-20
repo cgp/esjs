@@ -6,8 +6,11 @@ Elasticsearch JavaScript client that doesn't suck. (Hopefully)
 3. Ability to run server side in Java 
 4. Convenience parsing/formatting for return structures such as hits, histograms etc... (and the ability to extend via plugins to for tools like DS3/C3 etc..)
 5. Promises
-6. Some type of lazily evaluated expression
+6. Some type of lazily evaluated expression language
 7. plain text queries
+8. YML style query building
+9. intelligent in index setup
+10. 
 
 ### Example Usage (in process) 
     var es = new ES.Client(); // assume same domain but port 9200 for now, CORS support needed
