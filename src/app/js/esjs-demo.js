@@ -271,13 +271,11 @@ define([
    
    function performSearchTestAggFilters() {
       var search = es.createSearch("names", "name");                 
-      console.log(search.query);
-      
       var agg = search.aggs.aggs("bob");
       var filters = agg.filters();
       var t = filters.filters("steve");
       
-      console.log(agg, t);            
+      console.log(t);            
       t.term("phrase").value('fax');
       
       search.setSize(100);                              

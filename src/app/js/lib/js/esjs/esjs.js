@@ -47,16 +47,21 @@ define([
         }
         return val;
    },
-   "getQueryDSLStruct": function(queryDSLStruct, logstuff) {
+   "getQueryDSLStruct": function(queryDSLStruct, logstuff, useAsRoot) {
       // ends up getting used by Search,Query,Filter, so Utils is the most logical location
       //console.log(queryDSLStruct, typeof queryDSLStruct);
       if (typeof logstuff != "undefined") {
         //console.log("in", queryDSLStruct);
       }
       //console.log(queryDSLStruct);
-      var keys = Object.keys(queryDSLStruct);
-      if (keys.length == 0) {        
-        return null;
+      var keys;
+      if (typeof useAsRoot !== "undefined") {
+        keys = [useAsRoot];
+      } else {
+        var keys = Object.keys(queryDSLStruct);
+        if (keys.length == 0) {        
+          return null;
+        }
       }
       var body = {};
       for(var x=0;x<keys.length;x++) {
@@ -66,8 +71,12 @@ define([
       if (typeof logstuff != "undefined") {
         //console.log("result", body, JSON.stringify(body));
       }
-      console.log("body", body);
-      return body;
+      //console.log("body", body);
+      if (typeof useAsRoot !== "undefined") {
+        return body[useAsRoot];
+      } else {
+        return body;
+      }      
     }
   };
 
@@ -1005,16 +1014,22 @@ define([
       }
     },
     "filterTypeValue": {
-      "accessor": function(fieldName) {
-        console.log(fieldName);
-        return function(subfield) {
-            console.log("QQQQQQQQQQQQQQQQQQ", fieldName, subfield);
+      "accessor": function(fieldName) {        
+        return function(subfield) {            
             if (typeof this.values[fieldName] == "undefined") {
               this.values[fieldName] = new ES.Filter(this);
             }
             return this.values[fieldName];
         };
-      }
+      },      
+      "myconstructor": function(parent, fieldName) {        
+        this.up = function() { return parent; }
+        this.getBody = function(logstuff) { return Utils.getQueryDSLStruct(this.values, logstuff, fieldName); }
+        this.typeName = "filterTypeValue";        
+        this.values = {};        
+        this.values[fieldName] = new ES.Filter(this);
+      },
+      "returnSubterm": true
     },
   };
 
@@ -1030,14 +1045,12 @@ define([
         if (fieldType.substring(0, 1) == "[") {
           var realFieldType = fieldType.substring(1,fieldType.length-1);
           var subType = ES.FieldTypes[realFieldType];
-          console.log("--------",subType, realFieldType);
+          //console.log("--------",subType, realFieldType);
           this[fieldName] = function(fieldName) {
                 return function() {
-                    if (typeof this.values[fieldName] == "undefined") {
-                      console.log('aga');
+                    if (typeof this.values[fieldName] == "undefined") {                      
                       this.values[fieldName] = [];
-                    } else {
-                      console.log('not so much');
+                    } else {                      
                     }
 
                     console.log(this.values);
@@ -1062,21 +1075,21 @@ define([
         var subType = ES.FieldTypes[subTypeStr];
 
         typeInfo.accessor = function(fieldName) {
+              
               return function(term, value) {
+                //console.log("AAA", term, subTypeStr, fieldName);                    
                 if (typeof this.values[fieldName] == "undefined") {
                   this.values[fieldName] = new FieldType(this);
                 }
                 if (typeof this.values[fieldName].values[term] == "undefined") {
                   if (subTypeStr === "<none>") {
                      this.values[fieldName].values[term] = {}; // just an obj
-                  } else {
-                    console.log(term, subTypeStr);                    
-                    if (typeof subType.myconstructor == "undefined") {
-                      console.log('boom');
-                      this.values[fieldName].values[term] = new subType.accessor();
-                    } else {
-                     this.values[fieldName].values[term] = new subType.myconstructor(this.values[fieldName]);
-                    }
+                  } else {                    
+                     this.values[fieldName].values[term] = new subType.myconstructor(this.values[fieldName].values[term], term);                     
+                     if (subType.returnSubterm) {
+                       //console.log('returning2', this.values[fieldName].values[term], this.values[fieldName].values[term].values[term]);
+                       return this.values[fieldName].values[term].values[term];
+                     }
                   }
                 }
                 if (typeof value != 'undefined') {
@@ -1085,6 +1098,7 @@ define([
                 if (subTypeStr === "<none>") {
                   return this.values[fieldName];
                 } else {
+                  //console.log('returning', this.values[fieldName].values[term]);
                   return this.values[fieldName].values[term];
                 }
               };
@@ -1092,7 +1106,7 @@ define([
       }
     } else {
       typeInfo.accessor = function(fieldName) {
-            return function(value) {
+            return function(value) {              
               if (typeof this.values[fieldName] == "undefined") {
                 this.values[fieldName] = new FieldType(this);
               }
@@ -1185,7 +1199,7 @@ define([
   });
 
   // http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-filters.html
-  ES.Filter = function(parent) {
+  ES.Filter = function(parent) {    
     this.up = function() { return parent; }
     this.values = {};
     var fields = {
@@ -1213,7 +1227,7 @@ define([
     for(fieldName in fields) {
        this[fieldName] = ES.FieldTypes[fields[fieldName].type].accessor(fieldName);
     }    
-    this.getBody = function(logstuff) {if (typeof this.values.aggs == 'undefined') {return null} else {console.log(this.values.aggs.values);return Utils.getQueryDSLStruct(this.values.aggs.values, logstuff)}};
+    this.getBody = function(logstuff) {if (typeof this.values.aggs == 'undefined') {return null} else {/*console.log(this.values.aggs.values);*/return Utils.getQueryDSLStruct(this.values.aggs.values, logstuff)}};
   }
   
   ES.Mapping = function() {
