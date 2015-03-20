@@ -886,8 +886,7 @@ define([
                 //'top_hits': {'type': 'AggByField'},
                 'global': {'type': 'AggsGlobal'}, // filterer
                 'filter': {'type': 'AggsFilters'}, // bucket
-                'filters': {'type': 'AggsFilters'}, // bucketer
-                
+                'filters': {'type': 'AggsFilters'}, // bucketer                
                 'missing': {'type': 'AggsPercentiles'}, // filterer
                 'nested': {'type': 'AggsPercentiles'}, // bucketer
                 'reverse_nested': {'type': 'AggsPercentiles'}, // bucketer
@@ -931,11 +930,11 @@ define([
                    }
     },  
     "AggsFilters": {'fields': {
-                     'filters': {'type': 'filterTypeValue'},
+                     'filters': {'type': 'AggsFiltersOpt'},
                      'aggs': {'type': 'Aggs'},                                          
                    }
     },    
-    "AggsFiltersOpt": {'accessor': 'name:filterTypeValue'},
+    "AggsFiltersOpt": {'accessor': 'term:filterTypeValue'},
     "Mapping": {'accessor': 'term:MappingOpts'},
     "MappingOpts": {
            'fields': {
@@ -1007,7 +1006,9 @@ define([
     },
     "filterTypeValue": {
       "accessor": function(fieldName) {
-        return function() {
+        console.log(fieldName);
+        return function(subfield) {
+            console.log("QQQQQQQQQQQQQQQQQQ", fieldName, subfield);
             if (typeof this.values[fieldName] == "undefined") {
               this.values[fieldName] = new ES.Filter(this);
             }
@@ -1040,7 +1041,7 @@ define([
                     }
 
                     console.log(this.values);
-                    var q = new subType.constructor(this);
+                    var q = new subType.myconstructor(this);
                     console.log(q, fieldName, this.values[fieldName]);
                     this.values[fieldName].push(q);
                     return q;
@@ -1069,7 +1070,13 @@ define([
                   if (subTypeStr === "<none>") {
                      this.values[fieldName].values[term] = {}; // just an obj
                   } else {
-                     this.values[fieldName].values[term] = new subType.constructor(this.values[fieldName]);
+                    console.log(term, subTypeStr);                    
+                    if (typeof subType.myconstructor == "undefined") {
+                      console.log('boom');
+                      this.values[fieldName].values[term] = new subType.accessor();
+                    } else {
+                     this.values[fieldName].values[term] = new subType.myconstructor(this.values[fieldName]);
+                    }
                   }
                 }
                 if (typeof value != 'undefined') {
@@ -1101,7 +1108,7 @@ define([
 
   for(type in ES.FieldTypes) {
     if ((typeof ES.FieldTypes[type].accessor == "undefined") || (typeof ES.FieldTypes[type].accessor == "string")) {
-      ES.FieldTypes[type].constructor = createType(ES.FieldTypes[type], type); //sets the accessor and the constructor for a simple type
+      ES.FieldTypes[type].myconstructor = createType(ES.FieldTypes[type], type); //sets the accessor and the myconstructor for a simple type
     }
   }
 

@@ -274,7 +274,8 @@ define([
       console.log(search.query);
       
       var agg = search.aggs.aggs("bob");
-      var t = agg.filters().filters("steve");
+      var filters = agg.filters();
+      var t = filters.filters("steve");
       
       console.log(agg, t);            
       t.term("phrase").value('fax');
